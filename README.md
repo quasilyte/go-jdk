@@ -1,4 +1,3 @@
 # GopherJRE
 
-![Logo](logo.png)
-
+![Logo](docs/logo_small.png)
