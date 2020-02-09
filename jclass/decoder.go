@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math"
 )
 
 type Decoder struct {
@@ -360,13 +361,20 @@ func (d *Decoder) readConst() (Const, int, error) {
 		if err != nil {
 			return nil, 0, fmt.Errorf("read bytes: %w", err)
 		}
-		c = &IntConst{Value: int64(v)}
+		c = &IntConst{Value: int32(v)}
 	case 5:
 		v, err := d.readUint64()
 		if err != nil {
 			return nil, 0, fmt.Errorf("read bytes: %w", err)
 		}
-		c = &IntConst{Value: int64(v)}
+		c = &LongConst{Value: int64(v)}
+		skip = 2
+	case 6:
+		v, err := d.readUint64()
+		if err != nil {
+			return nil, 0, fmt.Errorf("read bytes: %w", err)
+		}
+		c = &DoubleConst{Value: math.Float64frombits(v)}
 		skip = 2
 	case 7:
 		nameIndex, err := d.readUint16()
