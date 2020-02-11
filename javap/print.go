@@ -11,8 +11,8 @@ import (
 	"github.com/quasilyte/GopherJRE/jclass"
 )
 
-// Printf pretty-prints c to a given writer.
-func Printf(w io.Writer, c *jclass.File) {
+// Fprint pretty-prints c to a given writer.
+func Fprint(w io.Writer, c *jclass.File) {
 	p := printer{w: w, c: c}
 
 	className := c.Consts[c.ThisClass].(*jclass.ClassConst).Name

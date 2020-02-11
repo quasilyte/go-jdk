@@ -34,6 +34,6 @@ func printFile(filename string) error {
 		return fmt.Errorf("decode error: %v", err)
 	}
 
-	javap.Printf(os.Stdout, jf)
+	javap.Fprint(os.Stdout, jf)
 	return nil
 }
