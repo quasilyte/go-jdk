@@ -8,6 +8,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/quasilyte/GopherJRE/bytecode"
 	"github.com/quasilyte/GopherJRE/jclass"
 )
 
@@ -47,11 +48,15 @@ func (p *printer) printMethod(m jclass.Method) {
 	p.write("    max_locals=%d max_stack=%d\n",
 		codeAttr.MaxLocals, codeAttr.MaxStack)
 	p.write("    bytecode (size=%d):\n", len(codeAttr.Code))
-	for i, b := range codeAttr.Code {
-		if i%5 == 0 && i != 0 {
-			p.write("\n")
-		}
-		p.write("      %02x", b)
+
+	pc := 0
+	code := codeAttr.Code
+	for pc < len(code) {
+		op := bytecode.Op(code[pc])
+		width := int(bytecode.OpWidth[op])
+		opbytes := code[pc : pc+width]
+		fmt.Printf("       %3x %-18s %x\n", pc, op.String(), opbytes)
+		pc += width
 	}
 	p.write("\n")
 }
