@@ -17,5 +17,5 @@ func NewVM() *VM {
 }
 
 func (vm *VM) LoadClass(c *ir.Class) (*Class, error) {
-	return &Class{Name: c.Name}, nil
+	return loadClass(vm, c)
 }
