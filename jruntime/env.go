@@ -30,7 +30,7 @@ type EnvConfig struct {
 	// Slice ownership is passed into Env, it should not be
 	// modified outside of it afterwards.
 	//
-	// nil will result in a new memory allocation of default size.
+	// empty (or nil) slice will result in a new memory allocation of default size.
 	StackMemory []byte
 }
 
@@ -41,12 +41,18 @@ func NewEnv(vm *VM, cfg *EnvConfig) *Env {
 	var env Env
 	env.vm = vm
 
+	var stack []byte
 	if cfg.StackMemory == nil {
-		stack := make([]byte, megabyte/4)
-		env.stack = &stack[0]
+		stack = make([]byte, megabyte/4)
 	} else {
-		env.stack = &cfg.StackMemory[0]
+		stack = cfg.StackMemory
 	}
+	env.stack = &stack[0]
+
+	// TODO(quasilyte): can we find a safe heuristic
+	// for objects count instead of preparing 100% slots?
+	objects := make([]*Object, len(stack)/8)
+	env.objects = &objects[0]
 
 	if cfg.AllocBytesLimit == 0 {
 		env.allocBytesLimit = megabyte
@@ -70,9 +76,18 @@ type envFixed struct {
 
 	allocBytesLeft int64
 
-	stack *byte
+	stack   *byte
+	objects **Object
 
 	vm *VM
+}
+
+// TODO(quasilyte): add a way to pass arguments.
+// TODO(quasilyte): add a way to receive call result.
+func (env *Env) Call(m *Method) error {
+	// This is a stub.
+	// TODO(quasilyte): actually call a method m.
+	return nil
 }
 
 // trackAllocations checks whether we can allocate size bytes.
