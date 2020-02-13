@@ -55,21 +55,60 @@ func (a *Assembler) Nop(length int) {
 	}
 }
 
-func (a *Assembler) AddqConst(v, slot int64) {
-	i := instruction{
-		prefix: rexW,
+func (a *Assembler) CmplRegMem(xreg uint8, yreg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0x3B,
+		reg1:   xreg,
+		reg2:   yreg,
+		flags:  flagModRM | flagMemory,
+		disp:   disp,
+	})
+}
+
+func (a *Assembler) MovlConst32Mem(v int32, reg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0xC7,
 		reg1:   op0,
-		reg2:   rsi,
-		flags:  flagModRM | flagMemory | flagImm,
-	}
-	i.disp = slot * 8
-	i.imm = v
-	if fitsInt8(v) {
-		i.opcode = 0x83
-	} else {
-		i.opcode = 0x81
-	}
-	a.push(i)
+		reg2:   reg,
+		flags:  flagModRM | flagMemory | flagImm32,
+		disp:   disp,
+		imm:    int64(v),
+	})
+}
+
+func (a *Assembler) MovlMemReg(srcreg, dstreg uint8, disp int32) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0x8B,
+		reg1:   dstreg,
+		reg2:   srcreg,
+		flags:  flagModRM | flagMemory,
+		disp:   disp,
+	})
+}
+
+func (a *Assembler) AddqConst8Mem(v int8, reg uint8, disp int32) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0x83,
+		reg1:   op0,
+		reg2:   reg,
+		flags:  flagModRM | flagMemory | flagImm8,
+		disp:   disp,
+		imm:    int64(v),
+	})
+}
+
+func (a *Assembler) AddqConst32Mem(v int32, reg uint8, disp int32) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0x81,
+		reg1:   op0,
+		reg2:   reg,
+		flags:  flagModRM | flagMemory | flagImm32,
+		disp:   disp,
+		imm:    int64(v),
+	})
 }
 
 func (a *Assembler) link() {
@@ -189,7 +228,7 @@ func (a *Assembler) encode(inst *instruction) {
 			switch {
 			case inst.disp == 0:
 				mod = disp0
-			case fitsInt8(inst.disp):
+			case fitsInt8(int64(inst.disp)):
 				mod = disp8
 			default:
 				mod = disp32
@@ -202,7 +241,7 @@ func (a *Assembler) encode(inst *instruction) {
 
 	// Encode displacement.
 	if inst.disp != 0 {
-		if fitsInt8(inst.disp) {
+		if fitsInt8(int64(inst.disp)) {
 			buf = append(buf, byte(inst.disp))
 		} else {
 			buf = appendInt32(buf, int32(inst.disp))
@@ -210,12 +249,11 @@ func (a *Assembler) encode(inst *instruction) {
 	}
 
 	// Encode immediate.
-	if inst.flags&flagImm != 0 {
-		if fitsInt8(inst.imm) {
-			buf = append(buf, byte(inst.imm))
-		} else {
-			buf = appendInt32(buf, int32(inst.imm))
-		}
+	switch {
+	case inst.flags&flagImm8 != 0:
+		buf = append(buf, byte(inst.imm))
+	case inst.flags&flagImm32 != 0:
+		buf = appendInt32(buf, int32(inst.imm))
 	}
 
 	inst.size = uint8(len(buf))

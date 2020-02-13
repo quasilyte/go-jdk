@@ -4,8 +4,8 @@ package x64
 //
 // We need this intermediate representation mostly for jump linkage.
 type instruction struct {
-	disp   int64 // Memory operand displacement (offset)
 	imm    int64 // Immediate operand
+	disp   int32 // Memory operand displacement (offset)
 	offset int32
 
 	buf [16]byte
@@ -25,7 +25,8 @@ func (i instruction) Bytes() []byte {
 const (
 	flagMemory uint8 = 1 << iota
 	flagModRM
-	flagImm
+	flagImm8
+	flagImm32
 	flagPseudo
 	flag0F
 )

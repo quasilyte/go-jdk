@@ -164,7 +164,7 @@ func TestAsm(t *testing.T) {
 		},
 
 		{
-			name: "testAddqConst",
+			name: "testAddq",
 			want: []expected{
 				{75, "ADDQ $0, 0*8(SI)", "48830600"},
 				{76, "ADDQ $1, 0*8(SI)", "48830601"},
@@ -177,15 +177,47 @@ func TestAsm(t *testing.T) {
 				{83, "ADDQ $-129, 100*8(SI)", "488186200300007fffffff"},
 			},
 			run: func(asm *Assembler) {
-				asm.AddqConst(0, 0)
-				asm.AddqConst(1, 0)
-				asm.AddqConst(1, 1)
-				asm.AddqConst(-1, 3)
-				asm.AddqConst(14, 10)
-				asm.AddqConst(14, 100)
-				asm.AddqConst(0xff, 0)
-				asm.AddqConst(0xff, 1)
-				asm.AddqConst(-129, 100)
+				asm.AddqConst8Mem(0, RSI, 0*8)
+				asm.AddqConst8Mem(1, RSI, 0*8)
+				asm.AddqConst8Mem(1, RSI, 1*8)
+				asm.AddqConst8Mem(-1, RSI, 3*8)
+				asm.AddqConst8Mem(14, RSI, 10*8)
+				asm.AddqConst8Mem(14, RSI, 100*8)
+				asm.AddqConst32Mem(0xff, RSI, 0*8)
+				asm.AddqConst32Mem(0xff, RSI, 1*8)
+				asm.AddqConst32Mem(-129, RSI, 100*8)
+			},
+		},
+
+		{
+			name: "testMovl",
+			want: []expected{
+				{87, "MOVL $0, 0*8(SI)", "c70600000000"},
+				{88, "MOVL $1, 0*8(DI)", "c70701000000"},
+				{89, "MOVL $1, 1*8(AX)", "c7400801000000"},
+				{90, "MOVL $-50000, 40*8(SI)", "c78640010000b03cffff"},
+				{91, "MOVQ 0*8(AX), BX", "488b18"},
+				{92, "MOVQ 16*8(BX), AX", "488b8380000000"},
+			},
+			run: func(asm *Assembler) {
+				asm.MovlConst32Mem(0, RSI, 0*8)
+				asm.MovlConst32Mem(1, RDI, 0*8)
+				asm.MovlConst32Mem(1, RAX, 1*8)
+				asm.MovlConst32Mem(-50000, RSI, 40*8)
+				asm.MovlMemReg(RAX, RBX, 0*8)
+				asm.MovlMemReg(RBX, RAX, 16*8)
+			},
+		},
+
+		{
+			name: "testCmpl",
+			want: []expected{
+				{96, "CMPL AX, 0*8(DI)", "3b07"},
+				{97, "CMPL BX, 1*8(AX)", "3b5808"},
+			},
+			run: func(asm *Assembler) {
+				asm.CmplRegMem(RAX, RDI, 0*8)
+				asm.CmplRegMem(RBX, RAX, 1*8)
 			},
 		},
 	}

@@ -29,12 +29,12 @@ const (
 	op7 = 0b111
 
 	// Registers occupy ModRM/reg and ModRM/rm fields.
-	rax = 0b000
-	rcx = 0b001
-	rdx = 0b010
-	rbx = 0b011
-	rsi = 0b110
-	rdi = 0b111
+	RAX = 0b000
+	RCX = 0b001
+	RDX = 0b010
+	RBX = 0b011
+	RSI = 0b110
+	RDI = 0b111
 )
 
 const (

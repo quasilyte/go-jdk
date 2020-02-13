@@ -71,14 +71,28 @@ l1:
         JMP l3 // asm.Jmp(3)
         RET
 
-TEXT testAddqConst(SB), 0, $0-0
-        ADDQ $0, 0*8(SI) // asm.AddqConst(0, 0)
-        ADDQ $1, 0*8(SI) // asm.AddqConst(1, 0)
-        ADDQ $1, 1*8(SI) // asm.AddqConst(1, 1)
-        ADDQ $-1, 3*8(SI) // asm.AddqConst(-1, 3)
-        ADDQ $14, 10*8(SI) // asm.AddqConst(14, 10)
-        ADDQ $14, 100*8(SI) // asm.AddqConst(14, 100)
-        ADDQ $0xff, 0*8(SI) // asm.AddqConst(0xff, 0)
-        ADDQ $0xff, 1*8(SI) // asm.AddqConst(0xff, 1)
-        ADDQ $-129, 100*8(SI) // asm.AddqConst(-129, 100)
+TEXT testAddq(SB), 0, $0-0
+        ADDQ $0, 0*8(SI) // asm.AddqConst8Mem(0, RSI, 0*8)
+        ADDQ $1, 0*8(SI) // asm.AddqConst8Mem(1, RSI, 0*8)
+        ADDQ $1, 1*8(SI) // asm.AddqConst8Mem(1, RSI, 1*8)
+        ADDQ $-1, 3*8(SI) // asm.AddqConst8Mem(-1, RSI, 3*8)
+        ADDQ $14, 10*8(SI) // asm.AddqConst8Mem(14, RSI, 10*8)
+        ADDQ $14, 100*8(SI) // asm.AddqConst8Mem(14, RSI, 100*8)
+        ADDQ $0xff, 0*8(SI) // asm.AddqConst32Mem(0xff, RSI, 0*8)
+        ADDQ $0xff, 1*8(SI) // asm.AddqConst32Mem(0xff, RSI, 1*8)
+        ADDQ $-129, 100*8(SI) // asm.AddqConst32Mem(-129, RSI, 100*8)
+        RET
+
+TEXT testMovl(SB), 0, $0-0
+        MOVL $0, 0*8(SI) // asm.MovlConst32Mem(0, RSI, 0*8)
+        MOVL $1, 0*8(DI) // asm.MovlConst32Mem(1, RDI, 0*8)
+        MOVL $1, 1*8(AX) // asm.MovlConst32Mem(1, RAX, 1*8)
+        MOVL $-50000, 40*8(SI) // asm.MovlConst32Mem(-50000, RSI, 40*8)
+        MOVQ 0*8(AX), BX // asm.MovlMemReg(RAX, RBX, 0*8)
+        MOVQ 16*8(BX), AX // asm.MovlMemReg(RBX, RAX, 16*8)
+        RET
+
+TEXT testCmpl(SB), 0, $0-0
+        CMPL AX, 0*8(DI) // asm.CmplRegMem(RAX, RDI, 0*8)
+        CMPL BX, 1*8(AX) // asm.CmplRegMem(RBX, RAX, 1*8)
         RET
