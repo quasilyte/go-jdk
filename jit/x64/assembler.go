@@ -2,7 +2,6 @@ package x64
 
 import (
 	"bytes"
-	"encoding/binary"
 )
 
 func NewAssembler() *Assembler {
@@ -24,6 +23,7 @@ func (a *Assembler) Reset() {
 	a.length = 0
 	a.pending = a.pending[:0]
 	a.jumps = a.jumps[:0]
+	a.labels = a.labels[:0]
 }
 
 func (a *Assembler) Link() []byte {
@@ -41,12 +41,11 @@ func (a *Assembler) Label(id int64) {
 }
 
 func (a *Assembler) Jmp(labelID int64) {
-	a.pushJmp(instruction{
-		opcode: jmp32op,
-		size:   5, // Size of rel32 jump
-		imm:    labelID,
-		flags:  flagPseudo,
-	})
+	a.pushJmp(jmp8op, labelID)
+}
+
+func (a *Assembler) Jge(labelID int64) {
+	a.pushJcc(jge8op, labelID)
 }
 
 func (a *Assembler) Nop(length int) {
@@ -81,7 +80,7 @@ func (a *Assembler) link() {
 		id2index[int(id)] = labelIndex
 	}
 
-	// Pass 1 (short, only jumps): find short jumps, assign opcodes.
+	// Pass 1 (fast, only jumps): find short jumps, assign opcodes.
 	pass2needed := false
 	for _, jumpIndex := range a.jumps {
 		jmp := &a.pending[jumpIndex]
@@ -89,16 +88,17 @@ func (a *Assembler) link() {
 		label := &a.pending[labelIndex]
 		dist := label.offset - jmp.offset
 
-		if dist > -120 && dist < 120 {
+		if dist < -120 || dist > 120 {
 			pass2needed = true
-			jmp.size = 2
-			jmp.buf[0] = jmp8op
-		} else {
-			jmp.buf[0] = jmp32op
+			jmp.opcode = jumpRel8ToRel32[jmp.opcode]
+			jmp.size = uint8(jmp.disp)
 		}
 	}
 
 	// Pass 2: re-calculate offsets.
+	//
+	// For small functions where all jumps are 8-bit relative,
+	// we don't need a second pass at all.
 	if pass2needed {
 		offset := int32(0)
 		for i, inst := range a.pending {
@@ -107,22 +107,54 @@ func (a *Assembler) link() {
 		}
 	}
 
-	// Pass 3 (short, only jumps): write jump relative targets.
+	// Pass 3 (fast, only jumps): assemble jumps.
 	for _, jumpIndex := range a.jumps {
 		jmp := &a.pending[jumpIndex]
 		labelIndex := id2index[int(jmp.imm)]
 		label := &a.pending[labelIndex]
-		dist := label.offset - jmp.offset
+		target := (label.offset - jmp.offset) - int32(jmp.size)
 
-		if jmp.buf[0] == jmp8op {
-			jmp.buf[1] = byte(dist - 2)
+		// We're using a fact that all jumps have very similar encoding.
+		// It's either 2, 5 or 6 bytes.
+		// 2 bytes are used for all rel8 forms.
+		// 5 bytes are unconditional jump (JMP) rel32 form.
+		// 6 bytes is a conditional jump (Jcc) rel32 that requires 0x0F prefix.
+		buf := jmp.buf[:0]
+		if jmp.size == 6 {
+			buf = append(buf, 0x0F)
+		}
+		buf = append(buf, jmp.opcode)
+		if jmp.size == 2 {
+			buf = append(buf, byte(target))
 		} else {
-			binary.LittleEndian.PutUint32(jmp.buf[1:], uint32(dist-5))
+			buf = appendInt32(buf, target)
+		}
+		if len(buf) != int(jmp.size) {
+			panic("len(buf) != jmp.size")
 		}
 	}
 }
 
-func (a *Assembler) pushJmp(inst instruction) {
+func (a *Assembler) pushJcc(op uint8, labelID int64) {
+	inst := instruction{
+		opcode: op,
+		imm:    labelID,
+		size:   2, // rel8 form size
+		disp:   6, // rel32 form size
+		flags:  flagPseudo,
+	}
+	a.jumps = append(a.jumps, len(a.pending))
+	a.push(inst)
+}
+
+func (a *Assembler) pushJmp(op uint8, labelID int64) {
+	inst := instruction{
+		opcode: op,
+		imm:    labelID,
+		size:   2, // rel8 form size
+		disp:   5, // rel32 form size
+		flags:  flagPseudo,
+	}
 	a.jumps = append(a.jumps, len(a.pending))
 	a.push(inst)
 }

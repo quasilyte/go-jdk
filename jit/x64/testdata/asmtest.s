@@ -1,5 +1,26 @@
 #define NOP1 BYTE $0x90
 
+TEXT testJge1(SB), 0, $0-0
+        JGE forward2 // asm.Jge(2)
+forward2:
+        JGE forward1 // asm.Label(2); asm.Jge(1)
+        NOP1         // asm.Nop(1)
+forward1:
+        NOP1 // asm.Label(1); asm.Nop(1)
+        RET
+
+TEXT testJge2(SB), 0, $0-0
+l2:
+        NOP1   // asm.Label(2); asm.Nop(1)
+        JGE l1 // asm.Jge(1)
+l3:
+        NOP1   // asm.Label(3); asm.Nop(1)
+        JGE l2 // asm.Jge(2)
+l1:
+        NOP1   // asm.Label(1); asm.Nop(1)
+        JGE l3 // asm.Jge(3)
+        RET
+
 TEXT testJmp1(SB), 0, $0-0
         JMP forward // asm.Jmp(7); asm.Label(7)
 forward:
@@ -37,7 +58,6 @@ l1:
 l2:
         NOP1 // asm.Label(2); asm.Nop(1)
         RET
-
 
 TEXT testJmp6(SB), 0, $0-0
 l2:

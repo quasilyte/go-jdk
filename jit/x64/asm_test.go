@@ -21,9 +21,50 @@ func TestAsm(t *testing.T) {
 	}{
 
 		{
+			name: "testJge1",
+			want: []expected{
+				{4, "JGE forward2", "7d00"},
+				{6, "JGE forward1", "7d01"},
+				{7, "NOP1", "90"},
+				{9, "NOP1", "90"},
+			},
+			run: func(asm *Assembler) {
+				asm.Jge(2)
+				asm.Label(2)
+				asm.Jge(1)
+				asm.Nop(1)
+				asm.Label(1)
+				asm.Nop(1)
+			},
+		},
+
+		{
+			name: "testJge2",
+			want: []expected{
+				{14, "NOP1", "90"},
+				{15, "JGE l1", "7d03"},
+				{17, "NOP1", "90"},
+				{18, "JGE l2", "7dfa"},
+				{20, "NOP1", "90"},
+				{21, "JGE l3", "7dfa"},
+			},
+			run: func(asm *Assembler) {
+				asm.Label(2)
+				asm.Nop(1)
+				asm.Jge(1)
+				asm.Label(3)
+				asm.Nop(1)
+				asm.Jge(2)
+				asm.Label(1)
+				asm.Nop(1)
+				asm.Jge(3)
+			},
+		},
+
+		{
 			name: "testJmp1",
 			want: []expected{
-				{4, "JMP forward", "eb00"},
+				{25, "JMP forward", "eb00"},
 			},
 			run: func(asm *Assembler) {
 				asm.Jmp(7)
@@ -34,7 +75,7 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testJmp2",
 			want: []expected{
-				{10, "JMP looping", "ebfe"},
+				{31, "JMP looping", "ebfe"},
 			},
 			run: func(asm *Assembler) {
 				asm.Label(3)
@@ -45,8 +86,8 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testJmp3",
 			want: []expected{
-				{15, "NOP1", "90"},
-				{16, "JMP backward", "ebfd"},
+				{36, "NOP1", "90"},
+				{37, "JMP backward", "ebfd"},
 			},
 			run: func(asm *Assembler) {
 				asm.Label(0)
@@ -58,11 +99,11 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testJmp4",
 			want: []expected{
-				{20, "JMP sharedlabel", "eb04"},
-				{21, "NOP1", "90"},
-				{22, "JMP sharedlabel", "eb01"},
-				{23, "NOP1", "90"},
-				{25, "NOP1", "90"},
+				{41, "JMP sharedlabel", "eb04"},
+				{42, "NOP1", "90"},
+				{43, "JMP sharedlabel", "eb01"},
+				{44, "NOP1", "90"},
+				{46, "NOP1", "90"},
 			},
 			run: func(asm *Assembler) {
 				asm.Jmp(0)
@@ -77,13 +118,13 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testJmp5",
 			want: []expected{
-				{29, "NOP1", "90"},
-				{30, "JMP l1", "eb03"},
-				{32, "NOP1", "90"},
-				{33, "JMP l2", "eb03"},
-				{35, "NOP1", "90"},
-				{36, "JMP l3", "ebfa"},
-				{38, "NOP1", "90"},
+				{50, "NOP1", "90"},
+				{51, "JMP l1", "eb03"},
+				{53, "NOP1", "90"},
+				{54, "JMP l2", "eb03"},
+				{56, "NOP1", "90"},
+				{57, "JMP l3", "ebfa"},
+				{59, "NOP1", "90"},
 			},
 			run: func(asm *Assembler) {
 				asm.Nop(1)
@@ -102,12 +143,12 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testJmp6",
 			want: []expected{
-				{44, "NOP1", "90"},
-				{45, "JMP l1", "eb03"},
-				{47, "NOP1", "90"},
-				{48, "JMP l2", "ebfa"},
-				{50, "NOP1", "90"},
-				{51, "JMP l3", "ebfa"},
+				{64, "NOP1", "90"},
+				{65, "JMP l1", "eb03"},
+				{67, "NOP1", "90"},
+				{68, "JMP l2", "ebfa"},
+				{70, "NOP1", "90"},
+				{71, "JMP l3", "ebfa"},
 			},
 			run: func(asm *Assembler) {
 				asm.Label(2)
@@ -125,15 +166,15 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testAddqConst",
 			want: []expected{
-				{55, "ADDQ $0, 0*8(SI)", "48830600"},
-				{56, "ADDQ $1, 0*8(SI)", "48830601"},
-				{57, "ADDQ $1, 1*8(SI)", "4883460801"},
-				{58, "ADDQ $-1, 3*8(SI)", "48834618ff"},
-				{59, "ADDQ $14, 10*8(SI)", "488346500e"},
-				{60, "ADDQ $14, 100*8(SI)", "488386200300000e"},
-				{61, "ADDQ $0xff, 0*8(SI)", "488106ff000000"},
-				{62, "ADDQ $0xff, 1*8(SI)", "48814608ff000000"},
-				{63, "ADDQ $-129, 100*8(SI)", "488186200300007fffffff"},
+				{75, "ADDQ $0, 0*8(SI)", "48830600"},
+				{76, "ADDQ $1, 0*8(SI)", "48830601"},
+				{77, "ADDQ $1, 1*8(SI)", "4883460801"},
+				{78, "ADDQ $-1, 3*8(SI)", "48834618ff"},
+				{79, "ADDQ $14, 10*8(SI)", "488346500e"},
+				{80, "ADDQ $14, 100*8(SI)", "488386200300000e"},
+				{81, "ADDQ $0xff, 0*8(SI)", "488106ff000000"},
+				{82, "ADDQ $0xff, 1*8(SI)", "48814608ff000000"},
+				{83, "ADDQ $-129, 100*8(SI)", "488186200300007fffffff"},
 			},
 			run: func(asm *Assembler) {
 				asm.AddqConst(0, 0)
