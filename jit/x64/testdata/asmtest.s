@@ -77,6 +77,12 @@ TEXT testJmpReg(SB), 0, $0-0
         JMP CX // asm.JmpReg(RCX)
         RET
 
+TEXT testJmpMem(SB), 0, $0-0
+        JMP (AX) // asm.JmpMem(RAX, 0)
+        JMP -8(DI) // asm.JmpMem(RDI, -8)
+        JMP 13935(CX) // asm.JmpMem(RCX, 13935)
+        RET
+
 TEXT testAdd(SB), 0, $0-0
         ADDQ $0, 0*8(SI) // asm.AddqConst8Mem(0, RSI, 0*8)
         ADDQ $1, 0*8(SI) // asm.AddqConst8Mem(1, RSI, 0*8)
