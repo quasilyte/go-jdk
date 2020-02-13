@@ -71,7 +71,13 @@ l1:
         JMP l3 // asm.Jmp(3)
         RET
 
-TEXT testAddq(SB), 0, $0-0
+TEXT testJmpReg(SB), 0, $0-0
+        JMP AX // asm.JmpReg(RAX)
+        JMP DX // asm.JmpReg(RDX)
+        JMP CX // asm.JmpReg(RCX)
+        RET
+
+TEXT testAdd(SB), 0, $0-0
         ADDQ $0, 0*8(SI) // asm.AddqConst8Mem(0, RSI, 0*8)
         ADDQ $1, 0*8(SI) // asm.AddqConst8Mem(1, RSI, 0*8)
         ADDQ $1, 1*8(SI) // asm.AddqConst8Mem(1, RSI, 1*8)
@@ -81,18 +87,26 @@ TEXT testAddq(SB), 0, $0-0
         ADDQ $0xff, 0*8(SI) // asm.AddqConst32Mem(0xff, RSI, 0*8)
         ADDQ $0xff, 1*8(SI) // asm.AddqConst32Mem(0xff, RSI, 1*8)
         ADDQ $-129, 100*8(SI) // asm.AddqConst32Mem(-129, RSI, 100*8)
+        ADDQ $1, AX // asm.AddqConst8Reg(1, RAX)
+        ADDQ $-1, DI // asm.AddqConst8Reg(-1, RDI)
         RET
 
-TEXT testMovl(SB), 0, $0-0
+TEXT testMov(SB), 0, $0-0
         MOVL $0, 0*8(SI) // asm.MovlConst32Mem(0, RSI, 0*8)
         MOVL $1, 0*8(DI) // asm.MovlConst32Mem(1, RDI, 0*8)
         MOVL $1, 1*8(AX) // asm.MovlConst32Mem(1, RAX, 1*8)
         MOVL $-50000, 40*8(SI) // asm.MovlConst32Mem(-50000, RSI, 40*8)
-        MOVQ 0*8(AX), BX // asm.MovlMemReg(RAX, RBX, 0*8)
-        MOVQ 16*8(BX), AX // asm.MovlMemReg(RBX, RAX, 16*8)
+        MOVQ 0*8(AX), BX // asm.MovqMemReg(RAX, RBX, 0*8)
+        MOVQ 16*8(BX), AX // asm.MovqMemReg(RBX, RAX, 16*8)
+        MOVQ AX, 0*8(DI) // asm.MovqRegMem(RAX, RDI, 0*8)
+        MOVQ DX, 3*8(DI) // asm.MovqRegMem(RDX, RDI, 3*8)
+        MOVQ AX, 0*8(AX) // asm.MovqRegMem(RAX, RAX, 0*8)
+        MOVQ $140038723203072, AX // asm.MovqConst64Reg(140038723203072, RAX)
+        MOVQ $9223372036854775807, DX // asm.MovqConst64Reg(9223372036854775807, RDX)
+        MOVQ $-9223372036854775800, SI // asm.MovqConst64Reg(-9223372036854775800, RSI)
         RET
 
-TEXT testCmpl(SB), 0, $0-0
+TEXT testCmp(SB), 0, $0-0
         CMPL AX, 0*8(DI) // asm.CmplRegMem(RAX, RDI, 0*8)
         CMPL BX, 1*8(AX) // asm.CmplRegMem(RBX, RAX, 1*8)
         RET

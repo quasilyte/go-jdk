@@ -55,6 +55,15 @@ func (a *Assembler) Nop(length int) {
 	}
 }
 
+func (a *Assembler) JmpReg(reg uint8) {
+	a.push(instruction{
+		opcode: 0xFF,
+		reg1:   op4,
+		reg2:   reg,
+		flags:  flagModRM,
+	})
+}
+
 func (a *Assembler) CmplRegMem(xreg uint8, yreg uint8, disp int32) {
 	a.push(instruction{
 		opcode: 0x3B,
@@ -76,7 +85,27 @@ func (a *Assembler) MovlConst32Mem(v int32, reg uint8, disp int32) {
 	})
 }
 
-func (a *Assembler) MovlMemReg(srcreg, dstreg uint8, disp int32) {
+func (a *Assembler) MovqConst64Reg(v int64, reg uint8) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0xB8 + reg,
+		flags:  flagImm64,
+		imm:    v,
+	})
+}
+
+func (a *Assembler) MovqRegMem(srcreg, dstreg uint8, disp int32) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0x89,
+		reg1:   srcreg,
+		reg2:   dstreg,
+		flags:  flagModRM | flagMemory,
+		disp:   disp,
+	})
+}
+
+func (a *Assembler) MovqMemReg(srcreg, dstreg uint8, disp int32) {
 	a.push(instruction{
 		prefix: rexW,
 		opcode: 0x8B,
@@ -84,6 +113,17 @@ func (a *Assembler) MovlMemReg(srcreg, dstreg uint8, disp int32) {
 		reg2:   srcreg,
 		flags:  flagModRM | flagMemory,
 		disp:   disp,
+	})
+}
+
+func (a *Assembler) AddqConst8Reg(v int8, reg uint8) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0x83,
+		reg1:   op0,
+		reg2:   reg,
+		flags:  flagModRM | flagImm8,
+		imm:    int64(v),
 	})
 }
 
@@ -254,6 +294,8 @@ func (a *Assembler) encode(inst *instruction) {
 		buf = append(buf, byte(inst.imm))
 	case inst.flags&flagImm32 != 0:
 		buf = appendInt32(buf, int32(inst.imm))
+	case inst.flags&flagImm64 != 0:
+		buf = appendInt64(buf, inst.imm)
 	}
 
 	inst.size = uint8(len(buf))

@@ -27,6 +27,7 @@ const (
 	flagModRM
 	flagImm8
 	flagImm32
+	flagImm64
 	flagPseudo
 	flag0F
 )
