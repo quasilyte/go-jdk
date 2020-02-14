@@ -102,6 +102,10 @@ TEXT testMov(SB), 0, $0-0
         MOVL $1, 0*8(DI) // asm.MovlConst32Mem(1, RDI, 0*8)
         MOVL $1, 1*8(AX) // asm.MovlConst32Mem(1, RAX, 1*8)
         MOVL $-50000, 40*8(SI) // asm.MovlConst32Mem(-50000, RSI, 40*8)
+        MOVL (AX), AX // asm.MovlMemReg(RAX, RAX, 0)
+        MOVL -16(CX), DX // asm.MovlMemReg(RCX, RDX, -16)
+        MOVL AX, (AX) // asm.MovlRegMem(RAX, RAX, 0)
+        MOVL DX, -16(CX) // asm.MovlRegMem(RDX, RCX, -16)
         MOVQ 0*8(AX), BX // asm.MovqMemReg(RAX, RBX, 0*8)
         MOVQ 16*8(BX), AX // asm.MovqMemReg(RBX, RAX, 16*8)
         MOVQ AX, 0*8(DI) // asm.MovqRegMem(RAX, RDI, 0*8)
@@ -115,4 +119,14 @@ TEXT testMov(SB), 0, $0-0
 TEXT testCmp(SB), 0, $0-0
         CMPL AX, 0*8(DI) // asm.CmplRegMem(RAX, RDI, 0*8)
         CMPL BX, 1*8(AX) // asm.CmplRegMem(RBX, RAX, 1*8)
+        CMPQ 6*8(SI), $0 // asm.CmpqConst8Mem(0, RSI, 6*8)
+        RET
+
+TEXT testNeg(SB), 0, $0-0
+        NEGQ 0*8(SI) // asm.NegqMem(RSI, 0*8)
+        NEGQ 5*8(AX) // asm.NegqMem(RAX, 5*8)
+        NEGL AX // asm.NeglReg(RAX)
+        NEGL DX // asm.NeglReg(RDX)
+        NEGL (AX) // asm.NeglMem(RAX, 0)
+        NEGL 100(BX) // asm.NeglMem(RBX, 100)
         RET

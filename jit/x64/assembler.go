@@ -74,11 +74,73 @@ func (a *Assembler) JmpReg(reg uint8) {
 	})
 }
 
+func (a *Assembler) NeglReg(reg uint8) {
+	a.push(instruction{
+		opcode: 0xF7,
+		reg1:   op3,
+		reg2:   reg,
+		flags:  flagModRM,
+	})
+}
+
+func (a *Assembler) NeglMem(reg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0xF7,
+		reg1:   op3,
+		reg2:   reg,
+		flags:  flagModRM | flagMemory,
+		disp:   disp,
+	})
+}
+
+func (a *Assembler) NegqMem(reg uint8, disp int32) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0xF7,
+		reg1:   op3,
+		reg2:   reg,
+		flags:  flagModRM | flagMemory,
+		disp:   disp,
+	})
+}
+
+func (a *Assembler) CmpqConst8Mem(v int8, reg uint8, disp int32) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0x83,
+		reg1:   op7,
+		reg2:   reg,
+		flags:  flagModRM | flagMemory | flagImm8,
+		disp:   disp,
+		imm:    int64(v),
+	})
+}
+
 func (a *Assembler) CmplRegMem(xreg uint8, yreg uint8, disp int32) {
 	a.push(instruction{
 		opcode: 0x3B,
 		reg1:   xreg,
 		reg2:   yreg,
+		flags:  flagModRM | flagMemory,
+		disp:   disp,
+	})
+}
+
+func (a *Assembler) MovlRegMem(srcreg, dstreg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0x89,
+		reg1:   srcreg,
+		reg2:   dstreg,
+		flags:  flagModRM | flagMemory,
+		disp:   disp,
+	})
+}
+
+func (a *Assembler) MovlMemReg(srcreg, dstreg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0x8B,
+		reg1:   dstreg,
+		reg2:   srcreg,
 		flags:  flagModRM | flagMemory,
 		disp:   disp,
 	})

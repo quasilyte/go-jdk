@@ -228,20 +228,28 @@ func TestAsm(t *testing.T) {
 				{102, "MOVL $1, 0*8(DI)", "c70701000000"},
 				{103, "MOVL $1, 1*8(AX)", "c7400801000000"},
 				{104, "MOVL $-50000, 40*8(SI)", "c78640010000b03cffff"},
-				{105, "MOVQ 0*8(AX), BX", "488b18"},
-				{106, "MOVQ 16*8(BX), AX", "488b8380000000"},
-				{107, "MOVQ AX, 0*8(DI)", "488907"},
-				{108, "MOVQ DX, 3*8(DI)", "48895718"},
-				{109, "MOVQ AX, 0*8(AX)", "488900"},
-				{110, "MOVQ $140038723203072, AX", "48b800f0594e5d7f0000"},
-				{111, "MOVQ $9223372036854775807, DX", "48baffffffffffffff7f"},
-				{112, "MOVQ $-9223372036854775800, SI", "48be0800000000000080"},
+				{105, "MOVL (AX), AX", "8b00"},
+				{106, "MOVL -16(CX), DX", "8b51f0"},
+				{107, "MOVL AX, (AX)", "8900"},
+				{108, "MOVL DX, -16(CX)", "8951f0"},
+				{109, "MOVQ 0*8(AX), BX", "488b18"},
+				{110, "MOVQ 16*8(BX), AX", "488b8380000000"},
+				{111, "MOVQ AX, 0*8(DI)", "488907"},
+				{112, "MOVQ DX, 3*8(DI)", "48895718"},
+				{113, "MOVQ AX, 0*8(AX)", "488900"},
+				{114, "MOVQ $140038723203072, AX", "48b800f0594e5d7f0000"},
+				{115, "MOVQ $9223372036854775807, DX", "48baffffffffffffff7f"},
+				{116, "MOVQ $-9223372036854775800, SI", "48be0800000000000080"},
 			},
 			run: func(asm *Assembler) {
 				asm.MovlConst32Mem(0, RSI, 0*8)
 				asm.MovlConst32Mem(1, RDI, 0*8)
 				asm.MovlConst32Mem(1, RAX, 1*8)
 				asm.MovlConst32Mem(-50000, RSI, 40*8)
+				asm.MovlMemReg(RAX, RAX, 0)
+				asm.MovlMemReg(RCX, RDX, -16)
+				asm.MovlRegMem(RAX, RAX, 0)
+				asm.MovlRegMem(RDX, RCX, -16)
 				asm.MovqMemReg(RAX, RBX, 0*8)
 				asm.MovqMemReg(RBX, RAX, 16*8)
 				asm.MovqRegMem(RAX, RDI, 0*8)
@@ -256,12 +264,34 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testCmp",
 			want: []expected{
-				{116, "CMPL AX, 0*8(DI)", "3b07"},
-				{117, "CMPL BX, 1*8(AX)", "3b5808"},
+				{120, "CMPL AX, 0*8(DI)", "3b07"},
+				{121, "CMPL BX, 1*8(AX)", "3b5808"},
+				{122, "CMPQ 6*8(SI), $0", "48837e3000"},
 			},
 			run: func(asm *Assembler) {
 				asm.CmplRegMem(RAX, RDI, 0*8)
 				asm.CmplRegMem(RBX, RAX, 1*8)
+				asm.CmpqConst8Mem(0, RSI, 6*8)
+			},
+		},
+
+		{
+			name: "testNeg",
+			want: []expected{
+				{126, "NEGQ 0*8(SI)", "48f71e"},
+				{127, "NEGQ 5*8(AX)", "48f75828"},
+				{128, "NEGL AX", "f7d8"},
+				{129, "NEGL DX", "f7da"},
+				{130, "NEGL (AX)", "f718"},
+				{131, "NEGL 100(BX)", "f75b64"},
+			},
+			run: func(asm *Assembler) {
+				asm.NegqMem(RSI, 0*8)
+				asm.NegqMem(RAX, 5*8)
+				asm.NeglReg(RAX)
+				asm.NeglReg(RDX)
+				asm.NeglMem(RAX, 0)
+				asm.NeglMem(RBX, 100)
 			},
 		},
 	}
@@ -271,17 +301,15 @@ func TestAsm(t *testing.T) {
 			asm := NewAssembler()
 			test.run(asm)
 			have := fmt.Sprintf("%x", asm.Link())
-			var want strings.Builder
-			for _, v := range test.want {
-				want.WriteString(v.enc)
-			}
 			head := have
 			for _, v := range test.want {
 				if !strings.HasPrefix(head, v.enc) {
-					t.Fatalf("asmtest.s:%d: %s:\nexpected: %s\nhead: %s\nhave: %s\nwant: %s",
+					if len(head) >= len(v.enc) {
+						head = head[:len(v.enc)]
+					}
+					t.Fatalf("asmtest.s:%d: %s:\nhave: %s\nwant: %s",
 						v.line, v.asm,
-						v.enc, head,
-						have, want.String())
+						head, v.enc)
 				}
 				head = head[len(v.enc):]
 			}
