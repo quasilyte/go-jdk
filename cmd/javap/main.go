@@ -6,15 +6,17 @@ import (
 	"log"
 	"os"
 
+	"github.com/quasilyte/GopherJRE/cmd/internal/cmdutil"
 	"github.com/quasilyte/GopherJRE/irgen"
 	"github.com/quasilyte/GopherJRE/javap"
 	"github.com/quasilyte/GopherJRE/jclass"
+	"github.com/quasilyte/GopherJRE/jruntime"
 )
 
 func main() {
 	var args arguments
 	flag.StringVar(&args.format, "format", "raw",
-		`output format: raw or ir`)
+		`output format: raw, ir or asm`)
 	flag.Parse()
 
 	filenames := flag.Args()
@@ -30,14 +32,7 @@ type arguments struct {
 }
 
 func printFile(args *arguments, filename string) error {
-	f, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	var dec jclass.Decoder
-	jf, err := dec.Decode(f)
+	jf, err := cmdutil.DecodeClassFile(filename)
 	if err != nil {
 		return fmt.Errorf("decode error: %v", err)
 	}
@@ -48,6 +43,8 @@ func printFile(args *arguments, filename string) error {
 		return nil
 	case "ir":
 		return printFileIR(jf)
+	case "asm":
+		return printFileAsm(jf)
 	default:
 		return fmt.Errorf("unknown format: %s", args.format)
 	}
@@ -69,6 +66,26 @@ func printFileIR(jf *jclass.File) error {
 			}
 			fmt.Printf("        b%d %3d: %s\n", blockIndex, i, inst)
 		}
+	}
+
+	return nil
+}
+
+func printFileAsm(jf *jclass.File) error {
+	irclass, err := irgen.ConvertClass(jf)
+	if err != nil {
+		return err
+	}
+
+	vm := jruntime.NewVM()
+	c, err := vm.LoadClass(irclass)
+	if err != nil {
+		return err
+	}
+
+	for _, m := range c.Methods {
+		fmt.Printf("  method %s:\n", m.Name)
+		fmt.Printf("    %x\n", m.Code)
 	}
 
 	return nil
