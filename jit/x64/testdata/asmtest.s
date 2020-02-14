@@ -133,4 +133,6 @@ TEXT testNeg(SB), 0, $0-0
         NEGL DX // asm.NeglReg(RDX)
         NEGL (AX) // asm.NeglMem(RAX, 0)
         NEGL 100(BX) // asm.NeglMem(RBX, 100)
+        NEGQ CX // asm.NegqReg(RCX)
+        NEGQ BX // asm.NegqReg(RBX)
         RET

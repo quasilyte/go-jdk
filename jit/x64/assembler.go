@@ -74,6 +74,16 @@ func (a *Assembler) JmpReg(reg uint8) {
 	})
 }
 
+func (a *Assembler) NegqReg(reg uint8) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0xF7,
+		reg1:   op3,
+		reg2:   reg,
+		flags:  flagModRM,
+	})
+}
+
 func (a *Assembler) NeglReg(reg uint8) {
 	a.push(instruction{
 		opcode: 0xF7,

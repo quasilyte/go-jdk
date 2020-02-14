@@ -292,6 +292,8 @@ func TestAsm(t *testing.T) {
 				{133, "NEGL DX", "f7da"},
 				{134, "NEGL (AX)", "f718"},
 				{135, "NEGL 100(BX)", "f75b64"},
+				{136, "NEGQ CX", "48f7d9"},
+				{137, "NEGQ BX", "48f7db"},
 			},
 			run: func(asm *Assembler) {
 				asm.NegqMem(RSI, 0*8)
@@ -300,6 +302,8 @@ func TestAsm(t *testing.T) {
 				asm.NeglReg(RDX)
 				asm.NeglMem(RAX, 0)
 				asm.NeglMem(RBX, 100)
+				asm.NegqReg(RCX)
+				asm.NegqReg(RBX)
 			},
 		},
 	}
