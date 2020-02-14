@@ -40,6 +40,7 @@ const (
 	InstLoad
 	InstRet
 	InstIret
+	InstLret
 	InstIcmp
 	InstLcmp
 	InstJump
@@ -51,6 +52,7 @@ const (
 	InstFadd
 	InstIsub
 	InstIneg
+	InstLneg
 	InstDadd
 	InstConvL2I
 	InstConvF2I
