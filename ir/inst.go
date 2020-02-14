@@ -39,6 +39,7 @@ const (
 
 	InstLoad
 	InstRet
+	InstIret
 	InstIcmp
 	InstLcmp
 	InstJump
