@@ -104,6 +104,17 @@ func (a *Assembler) NegqMem(reg uint8, disp int32) {
 	})
 }
 
+func (a *Assembler) CmplConst8Mem(v int8, reg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0x83,
+		reg1:   op7,
+		reg2:   reg,
+		flags:  flagModRM | flagMemory | flagImm8,
+		disp:   disp,
+		imm:    int64(v),
+	})
+}
+
 func (a *Assembler) CmpqConst8Mem(v int8, reg uint8, disp int32) {
 	a.push(instruction{
 		prefix: rexW,
@@ -181,6 +192,16 @@ func (a *Assembler) MovqMemReg(srcreg, dstreg uint8, disp int32) {
 	a.push(instruction{
 		prefix: rexW,
 		opcode: 0x8B,
+		reg1:   dstreg,
+		reg2:   srcreg,
+		flags:  flagModRM | flagMemory,
+		disp:   disp,
+	})
+}
+
+func (a *Assembler) AddlMemReg(srcreg, dstreg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0x03,
 		reg1:   dstreg,
 		reg2:   srcreg,
 		flags:  flagModRM | flagMemory,

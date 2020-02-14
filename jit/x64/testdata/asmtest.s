@@ -84,6 +84,8 @@ TEXT testJmpMem(SB), 0, $0-0
         RET
 
 TEXT testAdd(SB), 0, $0-0
+        ADDL (AX), DX // asm.AddlMemReg(RAX, RDX, 0)
+        ADDL 8(SI), AX // asm.AddlMemReg(RSI, RAX, 8)
         ADDQ $0, 0*8(SI) // asm.AddqConst8Mem(0, RSI, 0*8)
         ADDQ $1, 0*8(SI) // asm.AddqConst8Mem(1, RSI, 0*8)
         ADDQ $1, 1*8(SI) // asm.AddqConst8Mem(1, RSI, 1*8)
@@ -119,6 +121,8 @@ TEXT testMov(SB), 0, $0-0
 TEXT testCmp(SB), 0, $0-0
         CMPL AX, 0*8(DI) // asm.CmplRegMem(RAX, RDI, 0*8)
         CMPL BX, 1*8(AX) // asm.CmplRegMem(RBX, RAX, 1*8)
+        CMPL 16(SI), $0  // asm.CmplConst8Mem(0, RSI, 16)
+        CMPL (AX), $15   // asm.CmplConst8Mem(15, RAX, 0)
         CMPQ 6*8(SI), $0 // asm.CmpqConst8Mem(0, RSI, 6*8)
         RET
 
