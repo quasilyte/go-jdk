@@ -30,9 +30,6 @@ func (d *Decoder) Decode(r io.Reader) (*File, error) {
 	d.deferred.descriptors2 = map[*string]uint16{}
 	d.deferred.classNames = map[*string]uint16{}
 	err := d.decode()
-	if err == nil {
-		d.resolveDeferred()
-	}
 	return d.f, err
 }
 
@@ -100,7 +97,7 @@ func (d *Decoder) decodeClassName() error {
 	if err != nil {
 		return err
 	}
-	d.deferClassNameResolving(v, &d.f.ThisClassName)
+	d.f.ThisClassName = d.f.Consts[v].(*ClassConst).Name
 	return nil
 }
 
@@ -145,6 +142,7 @@ func (d *Decoder) decodeConstantPool() error {
 		i += skip
 	}
 	d.f.Consts = cp
+	d.resolveDeferred()
 	return nil
 }
 
