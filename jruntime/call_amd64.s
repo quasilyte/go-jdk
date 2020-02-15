@@ -1,6 +1,14 @@
 #include "textflag.h"
 
 // func jcall(e *Env, code *byte)
+//
+// Register roles:
+// AX - tmp register; also used for return value
+// BX - <unused> (pin to "this" pointer?)
+// CX - <unused>
+// DX - env pointer
+// SI - stack pointer
+// DI - <unused>
 TEXT ·jcall(SB), 0, $8-16
         MOVQ e+0(FP), DX // env is always at DX
         MOVQ 1*8(DX), SI // stack is always at SI
