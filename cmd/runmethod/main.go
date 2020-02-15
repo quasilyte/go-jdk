@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -32,7 +33,12 @@ func main() {
 		log.Fatalf("-method argument can't be empty")
 	}
 
-	vm := jruntime.NewVM()
+	compiler := jruntime.NewCompiler(runtime.GOARCH)
+	if compiler == nil {
+		log.Fatalf("%s arch is not supported", runtime.GOARCH)
+	}
+	vm := jruntime.NewVM(compiler)
+	defer vm.Close()
 
 	classfile, err := cmdutil.DecodeClassFile(args.classFile)
 	if err != nil {

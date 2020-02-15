@@ -2,6 +2,7 @@ package jruntime
 
 import (
 	"sync/atomic"
+	"unsafe"
 )
 
 // TODO(quasilyte): decide whether Env is thread-safe and in what contexts.
@@ -84,10 +85,14 @@ type envFixed struct {
 
 // TODO(quasilyte): add a way to pass arguments.
 // TODO(quasilyte): add a way to receive call result.
-func (env *Env) Call(m *Method) error {
-	// This is a stub.
-	// TODO(quasilyte): actually call a method m.
-	return nil
+func (env *Env) IntCall(m *Method) (int64, error) {
+	jcall(env, &m.Code[0])
+	return *(*int64)(unsafe.Pointer(env.stack)), nil
+}
+
+func (env *Env) IntArg(i int, v int64) {
+	ptr := unsafe.Pointer(uintptr(unsafe.Pointer(env.stack)) + uintptr(i*8) + 8)
+	*(*int64)(ptr) = v
 }
 
 // trackAllocations checks whether we can allocate size bytes.

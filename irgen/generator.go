@@ -69,10 +69,8 @@ func (g *generator) irArg(n int) ir.Arg {
 		return ir.Arg{Kind: ir.ArgReg, Value: v.value}
 	case valueTmp:
 		return ir.Arg{Kind: ir.ArgReg, Value: v.value + g.tmpOffset}
-	case valueIntConst:
+	case valueIntConst, valueLongConst:
 		return ir.Arg{Kind: ir.ArgIntConst, Value: v.value}
-	case valueLongConst:
-		return ir.Arg{Kind: ir.ArgLongConst, Value: v.value}
 	case valueFloatConst:
 		return ir.Arg{Kind: ir.ArgFloatConst, Value: v.value}
 	case valueDoubleConst:
@@ -104,6 +102,8 @@ func (g *generator) convert() []ir.Inst {
 			g.st.push(valueIntConst, -1)
 		case bytecode.Iconst0, bytecode.Iconst1, bytecode.Iconst2, bytecode.Iconst3, bytecode.Iconst4, bytecode.Iconst5:
 			g.st.push(valueIntConst, int64(op-bytecode.Iconst0))
+		case bytecode.Lconst0, bytecode.Lconst1:
+			g.st.push(valueLongConst, int64(op-bytecode.Lconst0))
 		case bytecode.Fconst0:
 			g.st.push(valueFloatConst, int64(math.Float32bits(0.0)))
 		case bytecode.Fconst1:
@@ -180,15 +180,9 @@ func (g *generator) convert() []ir.Inst {
 			g.convertBinOp(ir.InstIsub)
 
 		case bytecode.Ineg:
-			tmp := g.nextTmp()
-			dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
-			g.out = append(g.out, ir.Inst{
-				Dst:  dst,
-				Kind: ir.InstIneg,
-				Args: []ir.Arg{g.irArg(0)},
-			})
-			g.drop(1)
-			g.st.push(valueTmp, tmp)
+			g.convertUnaryOp(ir.InstIneg)
+		case bytecode.Lneg:
+			g.convertUnaryOp(ir.InstLneg)
 
 		case bytecode.Iinc:
 			index := code[pc+1]
@@ -204,19 +198,31 @@ func (g *generator) convert() []ir.Inst {
 			})
 
 		case bytecode.L2i:
-			g.convertConv(ir.InstConvL2I)
+			g.convertUnaryOp(ir.InstConvL2I)
 		case bytecode.F2i:
-			g.convertConv(ir.InstConvF2I)
+			g.convertUnaryOp(ir.InstConvF2I)
 		case bytecode.D2i:
-			g.convertConv(ir.InstConvD2I)
+			g.convertUnaryOp(ir.InstConvD2I)
 
 		case bytecode.Lcmp:
 			g.convertCmp(ir.InstLcmp)
 
+		case bytecode.Ifge:
+			if g.st.top().kind != valueFlags {
+				g.convertCmpZero()
+			}
+			g.convertCondJump(code, pc, ir.InstJumpGtEq)
 		case bytecode.Ifeq:
+			if g.st.top().kind != valueFlags {
+				g.convertCmpZero()
+			}
 			g.convertCondJump(code, pc, ir.InstJumpEqual)
 		case bytecode.Ifne:
+			if g.st.top().kind != valueFlags {
+				g.convertCmpZero()
+			}
 			g.convertCondJump(code, pc, ir.InstJumpNotEqual)
+
 		case bytecode.Ificmpge:
 			g.convertCmp(ir.InstIcmp)
 			g.convertCondJump(code, pc, ir.InstJumpGtEq)
@@ -237,11 +243,9 @@ func (g *generator) convert() []ir.Inst {
 			})
 
 		case bytecode.Ireturn:
-			g.out = append(g.out, ir.Inst{
-				Kind: ir.InstRet,
-				Args: []ir.Arg{g.irArg(0)},
-			})
-			g.drop(1)
+			g.convertRet(ir.InstIret)
+		case bytecode.Lreturn:
+			g.convertRet(ir.InstLret)
 		case bytecode.Return:
 			g.out = append(g.out, ir.Inst{
 				Kind: ir.InstRet,
@@ -266,8 +270,7 @@ func (g *generator) convert() []ir.Inst {
 
 	g.out[0].Flags.SetJumpTarget(true)
 	for _, inst := range g.out {
-		switch inst.Kind {
-		case ir.InstJumpEqual, ir.InstJumpNotEqual:
+		if isJump(inst) {
 			index := inst.Args[0].Value
 			g.out[index].Flags.SetJumpTarget(true)
 		}
@@ -309,6 +312,27 @@ func (g *generator) convertCondJump(code []byte, pc int, kind ir.InstKind) {
 	g.drop(1)
 }
 
+func (g *generator) convertCmpZero() {
+	var kind ir.InstKind
+	switch g.st.top().kind {
+	case valueIntLocal:
+		kind = ir.InstIcmp
+	default:
+		panic("unexpected kind for cmp zero") // FIXME
+	}
+
+	g.out = append(g.out, ir.Inst{
+		Dst:  ir.Arg{Kind: ir.ArgFlags},
+		Kind: kind,
+		Args: []ir.Arg{
+			g.irArg(0),
+			ir.Arg{Kind: ir.ArgIntConst, Value: 0},
+		},
+	})
+	g.drop(1)
+	g.st.push(valueFlags, 0)
+}
+
 func (g *generator) convertCmp(kind ir.InstKind) {
 	g.out = append(g.out, ir.Inst{
 		Dst:  ir.Arg{Kind: ir.ArgFlags},
@@ -319,7 +343,7 @@ func (g *generator) convertCmp(kind ir.InstKind) {
 	g.st.push(valueFlags, 0)
 }
 
-func (g *generator) convertConv(kind ir.InstKind) {
+func (g *generator) convertUnaryOp(kind ir.InstKind) {
 	tmp := g.nextTmp()
 	dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
 	g.out = append(g.out, ir.Inst{
@@ -341,4 +365,12 @@ func (g *generator) convertBinOp(kind ir.InstKind) {
 	})
 	g.drop(2)
 	g.st.push(valueTmp, tmp)
+}
+
+func (g *generator) convertRet(kind ir.InstKind) {
+	g.out = append(g.out, ir.Inst{
+		Kind: kind,
+		Args: []ir.Arg{g.irArg(0)},
+	})
+	g.drop(1)
 }

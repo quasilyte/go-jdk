@@ -23,11 +23,12 @@ func TestJcall(t *testing.T) {
 		// JMP -8(SI)
 		0xff, 0x66, 0xf8,
 	}
-	executable, err := mmap.Executable(len(funcCode))
+	d, executable, err := mmap.Executable(len(funcCode))
 	if err != nil {
 		t.Errorf("mmap executable: %v", err)
 	}
 	copy(executable, funcCode)
+	defer munmap(t, d)
 
 	checkStack := func() {
 		if stack[0] != 1 {
@@ -75,15 +76,23 @@ func BenchmarkJcall(b *testing.B) {
 		// JMP -8(SI)
 		0xff, 0x66, 0xf8,
 	}
-	executable, err := mmap.Executable(len(funcCode))
+	d, executable, err := mmap.Executable(len(funcCode))
 	if err != nil {
 		b.Errorf("mmap executable: %v", err)
 	}
 	copy(executable, funcCode)
+	defer munmap(b, d)
 	executablePtr := &executable[0]
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		jcall(&env, executablePtr)
+	}
+	b.StopTimer()
+}
+
+func munmap(tb testing.TB, d mmap.Descriptor) {
+	if err := mmap.Free(d); err != nil {
+		tb.Errorf("mmap free: %v", err)
 	}
 }

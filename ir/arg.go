@@ -24,7 +24,7 @@ func (arg Arg) String() string {
 		return "flags"
 	case ArgReg:
 		return fmt.Sprintf("r%d", arg.Value)
-	case ArgIntConst, ArgLongConst:
+	case ArgIntConst:
 		return fmt.Sprintf("%d", arg.Value)
 	case ArgFloatConst:
 		return formatFloat64(float64(arg.FloatValue()))
@@ -46,7 +46,6 @@ const (
 	ArgFlags
 	ArgReg
 	ArgIntConst
-	ArgLongConst
 	ArgFloatConst
 	ArgDoubleConst
 )

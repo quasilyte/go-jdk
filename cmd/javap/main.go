@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 
 	"github.com/quasilyte/GopherJRE/cmd/internal/cmdutil"
 	"github.com/quasilyte/GopherJRE/irgen"
@@ -77,7 +78,12 @@ func printFileAsm(jf *jclass.File) error {
 		return err
 	}
 
-	vm := jruntime.NewVM()
+	compiler := jruntime.NewCompiler(runtime.GOARCH)
+	if compiler == nil {
+		return fmt.Errorf("%s arch is not supported", runtime.GOARCH)
+	}
+	vm := jruntime.NewVM(compiler)
+	defer vm.Close()
 	c, err := vm.LoadClass(irclass)
 	if err != nil {
 		return err
