@@ -41,6 +41,7 @@ const (
 	InstRet
 	InstIret
 	InstLret
+	InstCallStatic
 	InstIcmp
 	InstLcmp
 	InstJump
