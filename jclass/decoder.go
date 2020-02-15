@@ -30,9 +30,6 @@ func (d *Decoder) Decode(r io.Reader) (*File, error) {
 	d.deferred.descriptors2 = map[*string]uint16{}
 	d.deferred.classNames = map[*string]uint16{}
 	err := d.decode()
-	if err == nil {
-		d.resolveDeferred()
-	}
 	return d.f, err
 }
 
@@ -80,7 +77,7 @@ func (d *Decoder) decode() error {
 		{"version", d.decodeVersion},
 		{"constant pool", d.decodeConstantPool},
 		{"access flags", d.makeUint16Decode(&d.f.AccessFlags)},
-		{"this class", d.makeUint16Decode(&d.f.ThisClass)},
+		{"this class", d.decodeClassName},
 		{"super class", d.makeUint16Decode(&d.f.SuperClass)},
 		{"interfaces", d.decodeInterfaces},
 		{"fields", d.decodeFields},
@@ -92,6 +89,15 @@ func (d *Decoder) decode() error {
 			return fmt.Errorf("decode %s: %w", step.name, err)
 		}
 	}
+	return nil
+}
+
+func (d *Decoder) decodeClassName() error {
+	v, err := d.readUint16()
+	if err != nil {
+		return err
+	}
+	d.f.ThisClassName = d.f.Consts[v].(*ClassConst).Name
 	return nil
 }
 
@@ -136,6 +142,7 @@ func (d *Decoder) decodeConstantPool() error {
 		i += skip
 	}
 	d.f.Consts = cp
+	d.resolveDeferred()
 	return nil
 }
 
@@ -335,7 +342,7 @@ func (d *Decoder) readField() (Field, error) {
 		return f, err
 	}
 	f.AccessFlags = accessFlags
-	f.NameIndex = nameIndex
+	f.Name = d.f.Consts[nameIndex].(*Utf8Const).Value
 	f.DescriptorIndex = descriptorIndex
 	f.Attrs = attrs
 	return f, nil

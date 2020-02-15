@@ -6,7 +6,7 @@ import (
 )
 
 func ConvertClass(f *jclass.File) (*ir.Class, error) {
-	fullname := f.Consts[f.ThisClass].(*jclass.ClassConst).Name
+	fullname := f.ThisClassName
 	name, pkgName := splitName(fullname)
 	c := &ir.Class{Name: name, PkgName: pkgName}
 	c.Methods = convertMethods(f)
@@ -23,7 +23,7 @@ func convertMethods(f *jclass.File) []ir.Method {
 }
 
 func convertMethod(f *jclass.File, m *jclass.Method, g *generator) ir.Method {
-	name := f.Consts[m.NameIndex].(*jclass.Utf8Const).Value
+	name := m.Name
 	var code []ir.Inst
 	if name != "<init>" {
 		code = g.ConvertMethod(f, m)
