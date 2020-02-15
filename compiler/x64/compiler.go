@@ -131,16 +131,21 @@ func (cl *Compiler) compileInst(i int, inst ir.Inst) bool {
 	case ir.InstIadd:
 		if a1 == dst {
 			if a2.Kind == ir.ArgIntConst {
-				asm.AddqConst8Mem(int8(a1.Value), x64.RSI, int32(dst.Value*8))
+				asm.AddlConst8Mem(int8(a2.Value), x64.RSI, int32(dst.Value*8))
 			} else {
 				return false
 			}
 		} else {
-			if a2.Kind == ir.ArgReg {
+			switch {
+			case a2.Kind == ir.ArgIntConst:
+				asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
+				asm.AddlConst8Reg(int8(a2.Value), x64.RAX)
+				asm.MovlRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
+			case a2.Kind == ir.ArgReg:
 				asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
 				asm.AddlMemReg(x64.RSI, x64.RAX, int32(a2.Value*8))
 				asm.MovlRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
-			} else {
+			default:
 				return false
 			}
 		}
