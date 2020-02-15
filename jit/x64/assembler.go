@@ -219,6 +219,27 @@ func (a *Assembler) AddlMemReg(srcreg, dstreg uint8, disp int32) {
 	})
 }
 
+func (a *Assembler) AddlConst8Mem(v int8, reg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0x83,
+		reg1:   op0,
+		reg2:   reg,
+		flags:  flagModRM | flagMemory | flagImm8,
+		disp:   disp,
+		imm:    int64(v),
+	})
+}
+
+func (a *Assembler) AddlConst8Reg(v int8, reg uint8) {
+	a.push(instruction{
+		opcode: 0x83,
+		reg1:   op0,
+		reg2:   reg,
+		flags:  flagModRM | flagImm8,
+		imm:    int64(v),
+	})
+}
+
 func (a *Assembler) AddqConst8Reg(v int8, reg uint8) {
 	a.push(instruction{
 		prefix: rexW,

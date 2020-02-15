@@ -86,6 +86,10 @@ TEXT testJmpMem(SB), 0, $0-0
 TEXT testAdd(SB), 0, $0-0
         ADDL (AX), DX // asm.AddlMemReg(RAX, RDX, 0)
         ADDL 8(SI), AX // asm.AddlMemReg(RSI, RAX, 8)
+        ADDL $7, (AX) // asm.AddlConst8Mem(7, RAX, 0)
+        ADDL $-9, -8(DX) // asm.AddlConst8Mem(-9, RDX, -8)
+        ADDL $127, CX // asm.AddlConst8Reg(127, RCX)
+        ADDL $-128, BX // asm.AddlConst8Reg(-128, RBX)
         ADDQ $0, 0*8(SI) // asm.AddqConst8Mem(0, RSI, 0*8)
         ADDQ $1, 0*8(SI) // asm.AddqConst8Mem(1, RSI, 0*8)
         ADDQ $1, 1*8(SI) // asm.AddqConst8Mem(1, RSI, 1*8)
