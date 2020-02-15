@@ -16,7 +16,7 @@ import (
 func Fprint(w io.Writer, c *jclass.File) {
 	p := printer{w: w, c: c}
 
-	className := c.Consts[c.ThisClass].(*jclass.ClassConst).Name
+	className := c.ThisClassName
 	p.write("class file for %q\n", className)
 	p.write("version: %d.%d\n", c.Ver.Major, c.Ver.Minor)
 
@@ -42,7 +42,7 @@ func (p *printer) write(format string, args ...interface{}) {
 }
 
 func (p *printer) printMethod(m jclass.Method) {
-	methodName := p.c.Consts[m.NameIndex].(*jclass.Utf8Const).Value
+	methodName := m.Name
 	p.write("  method %s:\n", methodName)
 	codeAttr := findAttr(p.c, m.Attrs, "Code").(jclass.CodeAttribute)
 	p.write("    max_locals=%d max_stack=%d\n",

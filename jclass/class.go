@@ -2,28 +2,28 @@ package jclass
 
 type Method struct {
 	AccessFlags     uint16
-	NameIndex       uint16
+	Name            string
 	DescriptorIndex uint16
 	Attrs           []Attribute
 }
 
 type Field struct {
 	AccessFlags     uint16
-	NameIndex       uint16
+	Name            string
 	DescriptorIndex uint16
 	Attrs           []Attribute
 }
 
 type File struct {
-	Ver         Version
-	Consts      []Const
-	AccessFlags uint16
-	ThisClass   uint16
-	SuperClass  uint16
-	Interfaces  []uint16
-	Fields      []Field
-	Methods     []Method
-	Attrs       []Attribute
+	Ver           Version
+	Consts        []Const
+	AccessFlags   uint16
+	ThisClassName string
+	SuperClass    uint16
+	Interfaces    []uint16
+	Fields        []Field
+	Methods       []Method
+	Attrs         []Attribute
 }
 
 type AccessFlags uint16
