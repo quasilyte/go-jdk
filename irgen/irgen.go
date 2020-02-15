@@ -1,6 +1,8 @@
 package irgen
 
 import (
+	"sort"
+
 	"github.com/quasilyte/GopherJRE/ir"
 	"github.com/quasilyte/GopherJRE/jclass"
 )
@@ -10,6 +12,9 @@ func ConvertClass(f *jclass.File) (*ir.Class, error) {
 	name, pkgName := splitName(fullname)
 	c := &ir.Class{Name: name, PkgName: pkgName}
 	c.Methods = convertMethods(f)
+	sort.Slice(c.Methods, func(i, j int) bool {
+		return c.Methods[i].Name < c.Methods[j].Name
+	})
 	return c, nil
 }
 

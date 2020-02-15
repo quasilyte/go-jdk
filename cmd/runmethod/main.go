@@ -77,7 +77,7 @@ func main() {
 	}
 
 	argsString := strings.Join(args.methodArgs, ", ")
-	log.Printf("%s.%s(%s) => %d\n", class.Name, args.methodName, argsString, result)
+	log.Printf("%s.%s(%s) => %d\n", class.Name, method.Name, argsString, result)
 	if args.verbose {
 		log.Println("-- verbose output --")
 		log.Printf("method machine code: %x\n", method.Code)
