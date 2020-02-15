@@ -7,6 +7,7 @@ type Class struct {
 }
 
 type Method struct {
-	Name string
-	Code []Inst
+	Name       string
+	Code       []Inst
+	FrameSlots int
 }

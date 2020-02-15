@@ -22,19 +22,7 @@ func convertMethods(f *jclass.File) []ir.Method {
 	var g generator
 	methods := make([]ir.Method, len(f.Methods))
 	for i := range f.Methods {
-		methods[i] = convertMethod(f, &f.Methods[i], &g)
+		methods[i] = g.ConvertMethod(f, &f.Methods[i])
 	}
 	return methods
-}
-
-func convertMethod(f *jclass.File, m *jclass.Method, g *generator) ir.Method {
-	name := m.Name
-	var code []ir.Inst
-	if name != "<init>" {
-		code = g.ConvertMethod(f, m)
-	}
-	return ir.Method{
-		Name: name,
-		Code: code,
-	}
 }

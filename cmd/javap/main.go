@@ -59,7 +59,7 @@ func printFileIR(jf *jclass.File) error {
 
 	fmt.Printf("name=%q pkg=%q\n", c.Name, c.PkgName)
 	for _, m := range c.Methods {
-		fmt.Printf("  method %s:\n", m.Name)
+		fmt.Printf("  method %s (slots: %d):\n", m.Name, m.FrameSlots)
 		blockIndex := -1
 		for i, inst := range m.Code {
 			if inst.Flags.IsBlockLead() {

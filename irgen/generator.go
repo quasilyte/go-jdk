@@ -26,7 +26,10 @@ type unresolvedBranch struct {
 	branch *int64
 }
 
-func (g *generator) ConvertMethod(f *jclass.File, m *jclass.Method) []ir.Inst {
+func (g *generator) ConvertMethod(f *jclass.File, m *jclass.Method) ir.Method {
+	if m.Name == "<init>" {
+		return ir.Method{Name: m.Name} // Fix when method calls are implemented
+	}
 	g.reset(f, m)
 	return g.convert()
 }
@@ -80,7 +83,7 @@ func (g *generator) irArg(n int) ir.Arg {
 	}
 }
 
-func (g *generator) convert() []ir.Inst {
+func (g *generator) convert() ir.Method {
 	var code []byte
 	for _, attr := range g.m.Attrs {
 		if attr, ok := attr.(jclass.CodeAttribute); ok {
@@ -287,7 +290,11 @@ func (g *generator) convert() []ir.Inst {
 
 	out := make([]ir.Inst, len(g.out))
 	copy(out, g.out)
-	return out
+	return ir.Method{
+		Name:       g.m.Name,
+		Code:       out,
+		FrameSlots: int(g.tmpOffset + g.tmp),
+	}
 }
 
 func (g *generator) convertCondJump(code []byte, pc int, kind ir.InstKind) {
