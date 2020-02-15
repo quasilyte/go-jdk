@@ -140,3 +140,9 @@ TEXT testNeg(SB), 0, $0-0
         NEGQ CX // asm.NegqReg(RCX)
         NEGQ BX // asm.NegqReg(RBX)
         RET
+
+TEXT testRaw(SB), 0, $0-0
+        MOVL -16(CX), DX // asm.Raw(0x8b, 0x51, 0xf0)
+        JMP AX // asm.Raw(0xff, 0xe0)
+        CMPQ 6*8(SI), $0 // asm.Raw(0x48, 0x83, 0x7e, 0x30, 0x00)
+        RET

@@ -74,6 +74,14 @@ func (a *Assembler) JmpReg(reg uint8) {
 	})
 }
 
+func (a *Assembler) Raw(enc ...byte) {
+	var inst instruction
+	copy(inst.buf[:], enc)
+	inst.size = uint8(len(enc))
+	inst.flags = flagPseudo
+	a.push(inst)
+}
+
 func (a *Assembler) NegqReg(reg uint8) {
 	a.push(instruction{
 		prefix: rexW,

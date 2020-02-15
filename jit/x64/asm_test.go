@@ -314,6 +314,20 @@ func TestAsm(t *testing.T) {
 				asm.NegqReg(RBX)
 			},
 		},
+
+		{
+			name: "testRaw",
+			want: []expected{
+				{145, "MOVL -16(CX), DX", "8b51f0"},
+				{146, "JMP AX", "ffe0"},
+				{147, "CMPQ 6*8(SI), $0", "48837e3000"},
+			},
+			run: func(asm *Assembler) {
+				asm.Raw(0x8b, 0x51, 0xf0)
+				asm.Raw(0xff, 0xe0)
+				asm.Raw(0x48, 0x83, 0x7e, 0x30, 0x00)
+			},
+		},
 	}
 
 	for _, test := range tests {
