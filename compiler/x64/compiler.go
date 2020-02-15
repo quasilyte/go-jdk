@@ -40,93 +40,114 @@ func (cl *Compiler) CompileMethods(methods []ir.Method) (codegen.Result, error) 
 }
 
 func (cl *Compiler) compileMethod(m *ir.Method) ([]byte, error) {
-	asm := cl.asm
-	asm.Reset()
-
+	cl.asm.Reset()
 	for i, inst := range m.Code {
-		var a1, a2 ir.Arg
-		dst := inst.Dst
-		if len(inst.Args) > 0 {
-			a1 = inst.Args[0]
-		}
-		if len(inst.Args) > 1 {
-			a2 = inst.Args[1]
-		}
-
-		if inst.Flags.IsJumpTarget() {
-			asm.Label(int64(i))
-		}
-
-		switch inst.Kind {
-		case ir.InstLoad:
-			switch a1.Kind {
-			case ir.ArgIntConst:
-				asm.MovlConst32Mem(int32(a1.Value), x64.RSI, int32(dst.Value*8))
-			}
-
-		case ir.InstIneg:
-			if a1 == dst {
-				asm.NeglMem(x64.RSI, int32(a1.Value*8))
-			} else {
-				asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
-				asm.NeglReg(x64.RAX)
-				asm.MovlRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
-			}
-		case ir.InstLneg:
-			if a1 == dst {
-				asm.NegqMem(x64.RSI, int32(a1.Value*8))
-			} else {
-				asm.MovqMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
-				asm.NegqReg(x64.RAX)
-				asm.MovqRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
-			}
-
-		case ir.InstJumpGtEq:
-			asm.Jge(a1.Value)
-		case ir.InstJump:
-			asm.Jmp(a1.Value)
-
-		case ir.InstIcmp:
-			switch {
-			case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgIntConst:
-				asm.CmplConst8Mem(int8(a1.Value), x64.RSI, int32(a1.Value*8))
-			case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgReg:
-				asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
-				asm.CmplRegMem(x64.RAX, x64.RSI, int32(a2.Value*8))
-			}
-		case ir.InstLcmp:
-			switch {
-			case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgIntConst:
-				asm.CmpqConst8Mem(int8(a1.Value), x64.RSI, int32(a1.Value*8))
-			}
-
-		case ir.InstIret:
-			asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
-			asm.JmpMem(x64.RSI, -8)
-		case ir.InstLret:
-			asm.MovqMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
-			asm.JmpMem(x64.RSI, -8)
-
-		case ir.InstRet:
-			asm.JmpMem(x64.RSI, -8)
-
-		case ir.InstIadd:
-			if a1 == dst {
-				if a2.Kind == ir.ArgIntConst {
-					asm.AddqConst8Mem(int8(a1.Value), x64.RSI, int32(dst.Value*8))
-				}
-			} else {
-				if a2.Kind == ir.ArgReg {
-					asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
-					asm.AddlMemReg(x64.RSI, x64.RAX, int32(a2.Value*8))
-					asm.MovlRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
-				}
-			}
-
-		default:
+		if !cl.compileInst(i, inst) {
 			return nil, fmt.Errorf("can't assemble %s", inst)
 		}
 	}
+	return cl.asm.Link(), nil
+}
 
-	return asm.Link(), nil
+func (cl *Compiler) compileInst(i int, inst ir.Inst) bool {
+	// A "return false" generally means "not implemented yet".
+	// When we'll finish with the compiler, this method may
+	// become void-typed.
+
+	asm := cl.asm
+
+	var a1, a2 ir.Arg
+	dst := inst.Dst
+	if len(inst.Args) > 0 {
+		a1 = inst.Args[0]
+	}
+	if len(inst.Args) > 1 {
+		a2 = inst.Args[1]
+	}
+
+	if inst.Flags.IsJumpTarget() {
+		asm.Label(int64(i))
+	}
+
+	switch inst.Kind {
+	case ir.InstLoad:
+		switch a1.Kind {
+		case ir.ArgIntConst:
+			asm.MovlConst32Mem(int32(a1.Value), x64.RSI, int32(dst.Value*8))
+		default:
+			return false
+		}
+
+	case ir.InstIneg:
+		if a1 == dst {
+			asm.NeglMem(x64.RSI, int32(a1.Value*8))
+		} else {
+			asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
+			asm.NeglReg(x64.RAX)
+			asm.MovlRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
+		}
+	case ir.InstLneg:
+		if a1 == dst {
+			asm.NegqMem(x64.RSI, int32(a1.Value*8))
+		} else {
+			asm.MovqMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
+			asm.NegqReg(x64.RAX)
+			asm.MovqRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
+		}
+
+	case ir.InstJumpGtEq:
+		asm.Jge(a1.Value)
+	case ir.InstJump:
+		asm.Jmp(a1.Value)
+
+	case ir.InstIcmp:
+		switch {
+		case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgIntConst:
+			asm.CmplConst8Mem(int8(a1.Value), x64.RSI, int32(a1.Value*8))
+		case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgReg:
+			asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
+			asm.CmplRegMem(x64.RAX, x64.RSI, int32(a2.Value*8))
+		default:
+			return false
+		}
+	case ir.InstLcmp:
+		switch {
+		case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgIntConst:
+			asm.CmpqConst8Mem(int8(a1.Value), x64.RSI, int32(a1.Value*8))
+		default:
+			return false
+		}
+
+	case ir.InstIret:
+		asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
+		asm.JmpMem(x64.RSI, -8)
+	case ir.InstLret:
+		asm.MovqMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
+		asm.JmpMem(x64.RSI, -8)
+
+	case ir.InstRet:
+		asm.JmpMem(x64.RSI, -8)
+
+	case ir.InstIadd:
+		if a1 == dst {
+			if a2.Kind == ir.ArgIntConst {
+				asm.AddqConst8Mem(int8(a1.Value), x64.RSI, int32(dst.Value*8))
+			} else {
+				return false
+			}
+		} else {
+			if a2.Kind == ir.ArgReg {
+				asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
+				asm.AddlMemReg(x64.RSI, x64.RAX, int32(a2.Value*8))
+				asm.MovlRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
+			} else {
+				return false
+			}
+		}
+
+	default:
+		return false
+	}
+
+	return true
 }
