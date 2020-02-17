@@ -352,7 +352,7 @@ func (d *Decoder) readField() (Field, error) {
 	}
 	f.AccessFlags = accessFlags
 	f.Name = d.f.Consts[nameIndex].(*Utf8Const).Value
-	f.DescriptorIndex = descriptorIndex
+	f.Descriptor = d.f.Consts[descriptorIndex].(*Utf8Const).Value
 	f.Attrs = attrs
 	return f, nil
 }

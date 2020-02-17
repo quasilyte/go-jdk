@@ -1,17 +1,17 @@
 package jclass
 
 type Method struct {
-	AccessFlags     uint16
-	Name            string
-	DescriptorIndex uint16
-	Attrs           []Attribute
+	AccessFlags uint16
+	Name        string
+	Descriptor  string
+	Attrs       []Attribute
 }
 
 type Field struct {
-	AccessFlags     uint16
-	Name            string
-	DescriptorIndex uint16
-	Attrs           []Attribute
+	AccessFlags uint16
+	Name        string
+	Descriptor  string
+	Attrs       []Attribute
 }
 
 type File struct {
