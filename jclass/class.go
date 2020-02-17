@@ -17,7 +17,7 @@ type Field struct {
 type File struct {
 	Ver           Version
 	Consts        []Const
-	AccessFlags   uint16
+	AccessFlags   AccessFlags
 	ThisClassName string
 	SuperClass    uint16
 	Interfaces    []uint16

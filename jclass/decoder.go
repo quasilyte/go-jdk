@@ -76,7 +76,7 @@ func (d *Decoder) decode() error {
 		{"magic", d.decodeMagic},
 		{"version", d.decodeVersion},
 		{"constant pool", d.decodeConstantPool},
-		{"access flags", d.makeUint16Decode(&d.f.AccessFlags)},
+		{"access flags", d.decodeClassAccessFlags},
 		{"this class", d.decodeClassName},
 		{"super class", d.makeUint16Decode(&d.f.SuperClass)},
 		{"interfaces", d.decodeInterfaces},
@@ -89,6 +89,15 @@ func (d *Decoder) decode() error {
 			return fmt.Errorf("decode %s: %w", step.name, err)
 		}
 	}
+	return nil
+}
+
+func (d *Decoder) decodeClassAccessFlags() error {
+	v, err := d.readUint16()
+	if err != nil {
+		return err
+	}
+	d.f.AccessFlags = AccessFlags(v)
 	return nil
 }
 
