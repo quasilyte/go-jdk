@@ -26,8 +26,6 @@ type File struct {
 	Attrs         []Attribute
 }
 
-type AccessFlags uint16
-
 type Version struct {
 	Minor uint16
 	Major uint16
