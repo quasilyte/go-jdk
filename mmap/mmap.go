@@ -10,10 +10,10 @@ type Descriptor struct {
 //
 // Descriptor should be used to free (unmap) the memory.
 func Executable(length int) (Descriptor, []byte, error) {
-	return executable(length)
+	return mmapExecutable(length)
 }
 
 // Free unmaps the memory that is associated with the given descriptor.
 func Free(d Descriptor) error {
-	return free(d)
+	return munmap(d)
 }

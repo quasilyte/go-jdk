@@ -5,19 +5,23 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/quasilyte/GopherJRE/cmd/internal/cmdutil"
+	"github.com/quasilyte/GopherJRE/ir"
 	"github.com/quasilyte/GopherJRE/irgen"
 	"github.com/quasilyte/GopherJRE/javap"
-	"github.com/quasilyte/GopherJRE/jclass"
+	"github.com/quasilyte/GopherJRE/jit"
 	"github.com/quasilyte/GopherJRE/jruntime"
+	"github.com/quasilyte/GopherJRE/loader"
 )
 
 func main() {
 	var args arguments
 	flag.StringVar(&args.format, "format", "raw",
-		`output format: raw, ir or asm`)
+		`output format: raw or ir`)
 	flag.Parse()
 
 	filenames := flag.Args()
@@ -33,33 +37,53 @@ type arguments struct {
 }
 
 func printFile(args *arguments, filename string) error {
-	jf, err := cmdutil.DecodeClassFile(filename)
-	if err != nil {
-		return fmt.Errorf("decode error: %v", err)
-	}
-
-	switch args.format {
-	case "raw":
+	if args.format == "raw" {
+		jf, err := cmdutil.DecodeClassFile(filename)
+		if err != nil {
+			return fmt.Errorf("decode error: %v", err)
+		}
 		javap.Fprint(os.Stdout, jf)
 		return nil
-	case "ir":
-		return printFileIR(jf)
-	case "asm":
-		return printFileAsm(jf)
-	default:
+	}
+
+	if args.format != "ir" {
 		return fmt.Errorf("unknown format: %s", args.format)
 	}
-}
 
-func printFileIR(jf *jclass.File) error {
-	c, err := irgen.ConvertClass(jf)
+	vm, err := jruntime.OpenVM(runtime.GOARCH)
 	if err != nil {
-		return err
+		return fmt.Errorf("open VM: %v", err)
+	}
+	defer vm.Close()
+
+	toCompile, err := loader.LoadClass(&vm.State, filename, &loader.Config{})
+	if err != nil {
+		return fmt.Errorf("load class: %v", err)
+	}
+	if err := irgen.Generate(&vm.State, toCompile); err != nil {
+		return fmt.Errorf("irgen: %v", err)
+	}
+	ctx := jit.Context{
+		Mmap:  &vm.Mmap,
+		State: &vm.State,
+	}
+	if err := vm.Compiler.Compile(ctx, toCompile); err != nil {
+		return fmt.Errorf("compile: %v", err)
+	}
+	pkg := toCompile[0]
+	className := strings.TrimSuffix(filepath.Base(filename), ".class")
+	var class *ir.Class
+	for i := range pkg.Classes {
+		if pkg.Classes[i].Out.Name == className {
+			class = &pkg.Classes[i]
+			break
+		}
 	}
 
-	fmt.Printf("name=%q pkg=%q\n", c.Name, c.PkgName)
-	for _, m := range c.Methods {
-		fmt.Printf("  method %s (slots: %d):\n", m.Name, m.FrameSlots)
+	fmt.Printf("class %q\n", class.Name)
+	for i := range class.Methods {
+		m := &class.Methods[i]
+		fmt.Printf("  method %s (slots: %d):\n", m.Out.Name, m.Out.FrameSlots)
 		blockIndex := -1
 		for i, inst := range m.Code {
 			if inst.Flags.IsBlockLead() {
@@ -67,31 +91,15 @@ func printFileIR(jf *jclass.File) error {
 			}
 			fmt.Printf("        b%d %3d: %s\n", blockIndex, i, inst)
 		}
-	}
-
-	return nil
-}
-
-func printFileAsm(jf *jclass.File) error {
-	irclass, err := irgen.ConvertClass(jf)
-	if err != nil {
-		return err
-	}
-
-	compiler := jruntime.NewCompiler(runtime.GOARCH)
-	if compiler == nil {
-		return fmt.Errorf("%s arch is not supported", runtime.GOARCH)
-	}
-	vm := jruntime.NewVM(compiler)
-	defer vm.Close()
-	c, err := vm.LoadClass(irclass)
-	if err != nil {
-		return err
-	}
-
-	for _, m := range c.Methods {
-		fmt.Printf("  method %s:\n", m.Name)
-		fmt.Printf("    %x\n", m.Code)
+		code := m.Out.Code
+		for len(code) != 0 {
+			length := 32
+			if len(code) < length {
+				length = len(code)
+			}
+			fmt.Printf("        %x\n", code[:length])
+			code = code[length:]
+		}
 	}
 
 	return nil

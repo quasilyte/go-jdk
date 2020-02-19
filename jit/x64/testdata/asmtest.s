@@ -112,6 +112,8 @@ TEXT testMov(SB), 0, $0-0
         MOVL -16(CX), DX // asm.MovlMemReg(RCX, RDX, -16)
         MOVL AX, (AX) // asm.MovlRegMem(RAX, RAX, 0)
         MOVL DX, -16(CX) // asm.MovlRegMem(RDX, RCX, -16)
+        MOVL $1355, AX // asm.MovlConst32Reg(1355, RAX)
+        MOVL $-6643, DX // asm.MovlConst32Reg(-6643, RDX)
         MOVQ 0*8(AX), BX // asm.MovqMemReg(RAX, RBX, 0*8)
         MOVQ 16*8(BX), AX // asm.MovqMemReg(RBX, RAX, 16*8)
         MOVQ AX, 0*8(DI) // asm.MovqRegMem(RAX, RDI, 0*8)
@@ -123,11 +125,13 @@ TEXT testMov(SB), 0, $0-0
         RET
 
 TEXT testCmp(SB), 0, $0-0
-        CMPL AX, 0*8(DI) // asm.CmplRegMem(RAX, RDI, 0*8)
-        CMPL BX, 1*8(AX) // asm.CmplRegMem(RBX, RAX, 1*8)
-        CMPL 16(SI), $0  // asm.CmplConst8Mem(0, RSI, 16)
-        CMPL (AX), $15   // asm.CmplConst8Mem(15, RAX, 0)
-        CMPQ 6*8(SI), $0 // asm.CmpqConst8Mem(0, RSI, 6*8)
+        CMPL AX, 0*8(DI)    // asm.CmplRegMem(RAX, RDI, 0*8)
+        CMPL BX, 1*8(AX)    // asm.CmplRegMem(RBX, RAX, 1*8)
+        CMPL 16(SI), $0     // asm.CmplConst8Mem(0, RSI, 16)
+        CMPL (AX), $15      // asm.CmplConst8Mem(15, RAX, 0)
+        CMPL (DI), $242     // asm.CmplConst32Mem(242, RDI, 0)
+        CMPL -8(BX), $-5343 // asm.CmplConst32Mem(-5343, RBX, -8)
+        CMPQ 6*8(SI), $0    // asm.CmpqConst8Mem(0, RSI, 6*8)
         RET
 
 TEXT testNeg(SB), 0, $0-0

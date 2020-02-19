@@ -3,13 +3,16 @@ package irgen
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/quasilyte/GopherJRE/bytecode"
 	"github.com/quasilyte/GopherJRE/ir"
 	"github.com/quasilyte/GopherJRE/jclass"
+	"github.com/quasilyte/GopherJRE/vmdat"
 )
 
 type generator struct {
+	state     *vmdat.State
 	f         *jclass.File
 	m         *jclass.Method
 	tmpOffset int64
@@ -26,16 +29,12 @@ type unresolvedBranch struct {
 	branch *int64
 }
 
-func (g *generator) ConvertMethod(f *jclass.File, m *jclass.Method) ir.Method {
-	if m.Name == "<init>" {
-		return ir.Method{Name: m.Name} // Fix when method calls are implemented
-	}
-	g.reset(f, m)
-	return g.convert()
+func (g *generator) Generate(i int, m *ir.Method) error {
+	g.reset(&g.f.Methods[i])
+	return g.generate(m)
 }
 
-func (g *generator) reset(f *jclass.File, m *jclass.Method) {
-	g.f = f
+func (g *generator) reset(m *jclass.Method) {
 	g.m = m
 	g.tmp = 0
 	g.freelist = g.freelist[:0]
@@ -83,7 +82,7 @@ func (g *generator) irArg(n int) ir.Arg {
 	}
 }
 
-func (g *generator) convert() ir.Method {
+func (g *generator) generate(dst *ir.Method) error {
 	var code []byte
 	for _, attr := range g.m.Attrs {
 		if attr, ok := attr.(jclass.CodeAttribute); ok {
@@ -166,7 +165,7 @@ func (g *generator) convert() ir.Method {
 			dst := ir.Arg{Kind: ir.ArgReg, Value: int64(op - bytecode.Istore0)}
 			g.out = append(g.out, ir.Inst{
 				Dst:  dst,
-				Kind: ir.InstLoad,
+				Kind: ir.InstIload,
 				Args: []ir.Arg{g.irArg(0)},
 			})
 			g.drop(1)
@@ -245,6 +244,37 @@ func (g *generator) convert() ir.Method {
 				branch: &inst.Args[0].Value,
 			})
 
+		case bytecode.Invokestatic:
+			ib1 := uint(code[pc+1])
+			ib2 := uint(code[pc+2])
+			i := ib1<<8 + ib2
+			m := g.f.Consts[i].(*jclass.MethodrefConst)
+			className, pkgName := splitName(m.ClassName)
+			pkg := g.state.FindPackage(pkgName)
+			class := pkg.FindClass(className)
+			symbolID := class.FindMethod(m.Name, m.Descriptor).ID
+			argc := argsCount(m.Descriptor)
+			args := make([]ir.Arg, argc+1)
+			args[0] = ir.Arg{Kind: ir.ArgSymbolID, Value: int64(symbolID)}
+			for i := range args[1:] {
+				args[len(args)-i-1] = g.irArg(i)
+			}
+			var dst ir.Arg
+			var tmp int64
+			if !strings.HasSuffix(m.Descriptor, ")V") {
+				tmp = g.nextTmp()
+				dst = ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
+			}
+			g.out = append(g.out, ir.Inst{
+				Dst:  dst,
+				Kind: ir.InstCallStatic,
+				Args: args,
+			})
+			g.drop(argc)
+			if dst.Kind != 0 {
+				g.st.push(valueTmp, tmp)
+			}
+
 		case bytecode.Ireturn:
 			g.convertRet(ir.InstIret)
 		case bytecode.Lreturn:
@@ -290,11 +320,9 @@ func (g *generator) convert() ir.Method {
 
 	out := make([]ir.Inst, len(g.out))
 	copy(out, g.out)
-	return ir.Method{
-		Name:       g.m.Name,
-		Code:       out,
-		FrameSlots: int(g.tmpOffset + g.tmp),
-	}
+	dst.Code = out
+	dst.Out.FrameSlots = int(g.tmpOffset + g.tmp)
+	return nil
 }
 
 func (g *generator) convertCondJump(code []byte, pc int, kind ir.InstKind) {

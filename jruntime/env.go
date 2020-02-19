@@ -3,6 +3,8 @@ package jruntime
 import (
 	"sync/atomic"
 	"unsafe"
+
+	"github.com/quasilyte/GopherJRE/vmdat"
 )
 
 // TODO(quasilyte): decide whether Env is thread-safe and in what contexts.
@@ -83,9 +85,7 @@ type envFixed struct {
 	vm *VM
 }
 
-// TODO(quasilyte): add a way to pass arguments.
-// TODO(quasilyte): add a way to receive call result.
-func (env *Env) IntCall(m *Method) (int64, error) {
+func (env *Env) IntCall(m *vmdat.Method) (int64, error) {
 	jcall(env, &m.Code[0])
 	return *(*int64)(unsafe.Pointer(env.stack)), nil
 }

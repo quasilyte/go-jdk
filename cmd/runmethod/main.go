@@ -2,15 +2,19 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/quasilyte/GopherJRE/cmd/internal/cmdutil"
 	"github.com/quasilyte/GopherJRE/irgen"
+	"github.com/quasilyte/GopherJRE/jit"
 	"github.com/quasilyte/GopherJRE/jruntime"
+	"github.com/quasilyte/GopherJRE/loader"
+	"github.com/quasilyte/GopherJRE/vmdat"
 )
 
 func main() {
@@ -21,6 +25,8 @@ func main() {
 		`path to a class file`)
 	flag.StringVar(&args.methodName, "method", "main",
 		`class static method name`)
+	flag.StringVar(&args.methodSignature, "signature", "",
+		`method signature which is required if method is overloaded`)
 	flag.BoolVar(&args.verbose, "v", false,
 		`verbose output mode`)
 	flag.Parse()
@@ -33,38 +39,43 @@ func main() {
 		log.Fatalf("-method argument can't be empty")
 	}
 
-	compiler := jruntime.NewCompiler(runtime.GOARCH)
-	if compiler == nil {
-		log.Fatalf("%s arch is not supported", runtime.GOARCH)
+	if err := mainNoExit(&args); err != nil {
+		log.Fatal(err)
 	}
-	vm := jruntime.NewVM(compiler)
+}
+
+type arguments struct {
+	classFile       string
+	methodName      string
+	methodSignature string
+	methodArgs      []string
+	verbose         bool
+}
+
+func mainNoExit(args *arguments) error {
+	vm, err := jruntime.OpenVM(runtime.GOARCH)
+	if err != nil {
+		return fmt.Errorf("open VM: %v", err)
+	}
 	defer vm.Close()
 
-	classfile, err := cmdutil.DecodeClassFile(args.classFile)
-	if err != nil {
-		log.Fatalf("decode class file: %v", err)
-	}
-	irclass, err := irgen.ConvertClass(classfile)
-	if err != nil {
-		log.Fatalf("generate ir: %v", err)
-	}
 	compileStart := time.Now()
-	class, err := vm.LoadClass(irclass)
+	class, err := loadAndCompileClass(vm, args.classFile)
 	compileTime := time.Since(compileStart)
 	if err != nil {
-		log.Fatalf("load class: %v", err)
+		return fmt.Errorf("load class: %v", err)
 	}
 
-	method := class.FindMethod(args.methodName)
+	method := class.FindMethod(args.methodName, args.methodSignature)
 	if method == nil {
-		log.Fatalf("method %s.%s not found", class.Name, args.methodName)
+		return fmt.Errorf("method %s.%s not found", class.Name, args.methodName)
 	}
 
 	env := jruntime.NewEnv(vm, &jruntime.EnvConfig{})
 	for i, arg := range args.methodArgs {
 		v, err := strconv.ParseInt(arg, 10, 64)
 		if err != nil {
-			log.Fatalf("method arg[%d]: only int args are supported, found %s", i, arg)
+			return fmt.Errorf("method arg[%d]: only int args are supported, found %s", i, arg)
 		}
 		env.IntArg(i, v)
 	}
@@ -73,7 +84,7 @@ func main() {
 	result, err := env.IntCall(method)
 	callTime := time.Since(callStart)
 	if err != nil {
-		log.Fatalf("call returned error: %v", err)
+		return fmt.Errorf("call returned error: %v", err)
 	}
 
 	argsString := strings.Join(args.methodArgs, ", ")
@@ -86,11 +97,25 @@ func main() {
 		log.Printf("method call time: %.8fs (%d ns)\n",
 			callTime.Seconds(), callTime.Nanoseconds())
 	}
+
+	return nil
 }
 
-type arguments struct {
-	classFile  string
-	methodName string
-	methodArgs []string
-	verbose    bool
+func loadAndCompileClass(vm *jruntime.VM, filename string) (*vmdat.Class, error) {
+	toCompile, err := loader.LoadClass(&vm.State, filename, &loader.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("load class: %v", err)
+	}
+	if err := irgen.Generate(&vm.State, toCompile); err != nil {
+		return nil, fmt.Errorf("irgen: %v", err)
+	}
+	ctx := jit.Context{
+		Mmap:  &vm.Mmap,
+		State: &vm.State,
+	}
+	if err := vm.Compiler.Compile(ctx, toCompile); err != nil {
+		return nil, fmt.Errorf("compile: %v", err)
+	}
+	className := strings.TrimSuffix(filepath.Base(filename), ".class")
+	return toCompile[0].Out.FindClass(className), nil
 }

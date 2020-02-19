@@ -37,7 +37,7 @@ type InstKind int
 const (
 	InstInvalid InstKind = iota
 
-	InstLoad
+	InstIload
 	InstRet
 	InstIret
 	InstLret

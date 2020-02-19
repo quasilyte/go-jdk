@@ -16,6 +16,25 @@ func isJump(inst ir.Inst) bool {
 	}
 }
 
+func argsCount(d string) int {
+	d = d[len("("):]
+	n := 0
+	for d[0] != ')' {
+		skip := 1
+		switch d[0] {
+		case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z':
+			n++
+		case 'L':
+			skip = strings.IndexByte(d, ';')
+			n++
+		case '[':
+			// Do nothing.
+		}
+		d = d[skip:]
+	}
+	return n
+}
+
 func splitName(full string) (name, pkg string) {
 	delim := strings.LastIndexByte(full, '/')
 	if delim == -1 {
