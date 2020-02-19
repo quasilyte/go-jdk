@@ -16,6 +16,7 @@ func TestArgCount(t *testing.T) {
 		{"([I[I)I", 2},
 		{"(LFoo;LBar;)I", 2},
 		{"(LObject;I)I", 2},
+		{"(Z[LObject;Z)V", 3},
 	}
 
 	for _, test := range tests {

@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/quasilyte/GopherJRE/ir"
+	"github.com/quasilyte/GopherJRE/jclass"
 )
 
 // isJump reports whether inst is a jump instruction.
@@ -17,21 +18,10 @@ func isJump(inst ir.Inst) bool {
 }
 
 func argsCount(d string) int {
-	d = d[len("("):]
 	n := 0
-	for d[0] != ')' {
-		skip := 1
-		switch d[0] {
-		case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z':
-			n++
-		case 'L':
-			skip = strings.IndexByte(d, ';')
-			n++
-		case '[':
-			// Do nothing.
-		}
-		d = d[skip:]
-	}
+	jclass.MethodDescriptor(d).WalkParams(func(jclass.DescriptorType) {
+		n++
+	})
 	return n
 }
 
