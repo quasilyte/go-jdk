@@ -3,6 +3,8 @@ package ir
 import (
 	"fmt"
 	"math"
+
+	"github.com/quasilyte/GopherJRE/symbol"
 )
 
 // Arg is an instruction argument (sometimes called operand).
@@ -15,6 +17,8 @@ type Arg struct {
 func (arg Arg) FloatValue() float32 { return math.Float32frombits(uint32(arg.Value)) }
 
 func (arg Arg) DoubleValue() float64 { return math.Float64frombits(uint64(arg.Value)) }
+
+func (arg Arg) SymbolID() symbol.ID { return symbol.ID(arg.Value) }
 
 func (arg Arg) String() string {
 	switch arg.Kind {
@@ -30,6 +34,9 @@ func (arg Arg) String() string {
 		return formatFloat64(float64(arg.FloatValue()))
 	case ArgDoubleConst:
 		return formatFloat64(arg.DoubleValue())
+	case ArgSymbolID:
+		sym := arg.SymbolID()
+		return fmt.Sprintf("sym{%d,%d,%d}", sym.PackageIndex(), sym.ClassIndex(), sym.MemberIndex())
 	default:
 		return fmt.Sprintf("{%d,%d}", arg.Kind, arg.Value)
 	}
@@ -48,4 +55,5 @@ const (
 	ArgIntConst
 	ArgFloatConst
 	ArgDoubleConst
+	ArgSymbolID
 )

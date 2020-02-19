@@ -1,28 +1,30 @@
 package irgen
 
 import (
-	"sort"
+	"fmt"
 
 	"github.com/quasilyte/GopherJRE/ir"
-	"github.com/quasilyte/GopherJRE/jclass"
+	"github.com/quasilyte/GopherJRE/vmdat"
 )
 
-func ConvertClass(f *jclass.File) (*ir.Class, error) {
-	fullname := f.ThisClassName
-	name, pkgName := splitName(fullname)
-	c := &ir.Class{Name: name, PkgName: pkgName}
-	c.Methods = convertMethods(f)
-	sort.Slice(c.Methods, func(i, j int) bool {
-		return c.Methods[i].Name < c.Methods[j].Name
-	})
-	return c, nil
-}
-
-func convertMethods(f *jclass.File) []ir.Method {
+func Generate(st *vmdat.State, packages []*ir.Package) error {
 	var g generator
-	methods := make([]ir.Method, len(f.Methods))
-	for i := range f.Methods {
-		methods[i] = g.ConvertMethod(f, &f.Methods[i])
+	g.state = st
+	for _, pkg := range packages {
+		for i := range pkg.Classes {
+			c := &pkg.Classes[i]
+			g.f = c.File
+			for j := range c.Methods {
+				m := &c.Methods[j]
+				if m.Out.Name == "<init>" {
+					continue
+				}
+				if err := g.Generate(j, m); err != nil {
+					return fmt.Errorf("%s: %s.%s: %v",
+						pkg.Out.Name, c.Name, m.Out.Name, err)
+				}
+			}
+		}
 	}
-	return methods
+	return nil
 }

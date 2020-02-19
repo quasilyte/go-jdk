@@ -244,14 +244,16 @@ func TestAsm(t *testing.T) {
 				{112, "MOVL -16(CX), DX", "8b51f0"},
 				{113, "MOVL AX, (AX)", "8900"},
 				{114, "MOVL DX, -16(CX)", "8951f0"},
-				{115, "MOVQ 0*8(AX), BX", "488b18"},
-				{116, "MOVQ 16*8(BX), AX", "488b8380000000"},
-				{117, "MOVQ AX, 0*8(DI)", "488907"},
-				{118, "MOVQ DX, 3*8(DI)", "48895718"},
-				{119, "MOVQ AX, 0*8(AX)", "488900"},
-				{120, "MOVQ $140038723203072, AX", "48b800f0594e5d7f0000"},
-				{121, "MOVQ $9223372036854775807, DX", "48baffffffffffffff7f"},
-				{122, "MOVQ $-9223372036854775800, SI", "48be0800000000000080"},
+				{115, "MOVL $1355, AX", "b84b050000"},
+				{116, "MOVL $-6643, DX", "ba0de6ffff"},
+				{117, "MOVQ 0*8(AX), BX", "488b18"},
+				{118, "MOVQ 16*8(BX), AX", "488b8380000000"},
+				{119, "MOVQ AX, 0*8(DI)", "488907"},
+				{120, "MOVQ DX, 3*8(DI)", "48895718"},
+				{121, "MOVQ AX, 0*8(AX)", "488900"},
+				{122, "MOVQ $140038723203072, AX", "48b800f0594e5d7f0000"},
+				{123, "MOVQ $9223372036854775807, DX", "48baffffffffffffff7f"},
+				{124, "MOVQ $-9223372036854775800, SI", "48be0800000000000080"},
 			},
 			run: func(asm *Assembler) {
 				asm.MovlConst32Mem(0, RSI, 0*8)
@@ -262,6 +264,8 @@ func TestAsm(t *testing.T) {
 				asm.MovlMemReg(RCX, RDX, -16)
 				asm.MovlRegMem(RAX, RAX, 0)
 				asm.MovlRegMem(RDX, RCX, -16)
+				asm.MovlConst32Reg(1355, RAX)
+				asm.MovlConst32Reg(-6643, RDX)
 				asm.MovqMemReg(RAX, RBX, 0*8)
 				asm.MovqMemReg(RBX, RAX, 16*8)
 				asm.MovqRegMem(RAX, RDI, 0*8)
@@ -276,17 +280,21 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testCmp",
 			want: []expected{
-				{126, "CMPL AX, 0*8(DI)", "3b07"},
-				{127, "CMPL BX, 1*8(AX)", "3b5808"},
-				{128, "CMPL 16(SI), $0", "837e1000"},
-				{129, "CMPL (AX), $15", "83380f"},
-				{130, "CMPQ 6*8(SI), $0", "48837e3000"},
+				{128, "CMPL AX, 0*8(DI)", "3b07"},
+				{129, "CMPL BX, 1*8(AX)", "3b5808"},
+				{130, "CMPL 16(SI), $0", "837e1000"},
+				{131, "CMPL (AX), $15", "83380f"},
+				{132, "CMPL (DI), $242", "813ff2000000"},
+				{133, "CMPL -8(BX), $-5343", "817bf821ebffff"},
+				{134, "CMPQ 6*8(SI), $0", "48837e3000"},
 			},
 			run: func(asm *Assembler) {
 				asm.CmplRegMem(RAX, RDI, 0*8)
 				asm.CmplRegMem(RBX, RAX, 1*8)
 				asm.CmplConst8Mem(0, RSI, 16)
 				asm.CmplConst8Mem(15, RAX, 0)
+				asm.CmplConst32Mem(242, RDI, 0)
+				asm.CmplConst32Mem(-5343, RBX, -8)
 				asm.CmpqConst8Mem(0, RSI, 6*8)
 			},
 		},
@@ -294,14 +302,14 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testNeg",
 			want: []expected{
-				{134, "NEGQ 0*8(SI)", "48f71e"},
-				{135, "NEGQ 5*8(AX)", "48f75828"},
-				{136, "NEGL AX", "f7d8"},
-				{137, "NEGL DX", "f7da"},
-				{138, "NEGL (AX)", "f718"},
-				{139, "NEGL 100(BX)", "f75b64"},
-				{140, "NEGQ CX", "48f7d9"},
-				{141, "NEGQ BX", "48f7db"},
+				{138, "NEGQ 0*8(SI)", "48f71e"},
+				{139, "NEGQ 5*8(AX)", "48f75828"},
+				{140, "NEGL AX", "f7d8"},
+				{141, "NEGL DX", "f7da"},
+				{142, "NEGL (AX)", "f718"},
+				{143, "NEGL 100(BX)", "f75b64"},
+				{144, "NEGQ CX", "48f7d9"},
+				{145, "NEGQ BX", "48f7db"},
 			},
 			run: func(asm *Assembler) {
 				asm.NegqMem(RSI, 0*8)
@@ -318,9 +326,9 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testRaw",
 			want: []expected{
-				{145, "MOVL -16(CX), DX", "8b51f0"},
-				{146, "JMP AX", "ffe0"},
-				{147, "CMPQ 6*8(SI), $0", "48837e3000"},
+				{149, "MOVL -16(CX), DX", "8b51f0"},
+				{150, "JMP AX", "ffe0"},
+				{151, "CMPQ 6*8(SI), $0", "48837e3000"},
 			},
 			run: func(asm *Assembler) {
 				asm.Raw(0x8b, 0x51, 0xf0)
@@ -334,7 +342,7 @@ func TestAsm(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			asm := NewAssembler()
 			test.run(asm)
-			have := fmt.Sprintf("%x", asm.Link())
+			have := fmt.Sprintf("%x", linkToBytes(asm))
 			head := have
 			for _, v := range test.want {
 				if !strings.HasPrefix(head, v.enc) {
@@ -347,9 +355,16 @@ func TestAsm(t *testing.T) {
 				}
 				head = head[len(v.enc):]
 			}
-			if len(head) != 0 {
+			if head != "" {
 				t.Fatalf("extra trailing bytes: %s", head)
 			}
 		})
 	}
+}
+
+func linkToBytes(asm *Assembler) []byte {
+	length := asm.Link()
+	buf := make([]byte, length)
+	asm.Put(buf)
+	return buf
 }

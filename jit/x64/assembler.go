@@ -1,9 +1,5 @@
 package x64
 
-import (
-	"bytes"
-)
-
 func NewAssembler() *Assembler {
 	return &Assembler{
 		pending: make([]instruction, 0, 256),
@@ -26,13 +22,21 @@ func (a *Assembler) Reset() {
 	a.labels = a.labels[:0]
 }
 
-func (a *Assembler) Link() []byte {
+func (a *Assembler) OffsetOf(index int) int32 {
+	return a.pending[index].offset
+}
+
+func (a *Assembler) Link() int {
 	a.link()
-	var buf bytes.Buffer
+	return a.length
+}
+
+func (a *Assembler) Put(dst []byte) {
+	offset := 0
 	for _, inst := range a.pending {
-		buf.Write(inst.Bytes())
+		copy(dst[offset:], inst.Bytes())
+		offset += int(inst.size)
 	}
-	return buf.Bytes()
 }
 
 func (a *Assembler) Label(id int64) {
@@ -133,6 +137,17 @@ func (a *Assembler) CmplConst8Mem(v int8, reg uint8, disp int32) {
 	})
 }
 
+func (a *Assembler) CmplConst32Mem(v int32, reg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0x81,
+		reg1:   op7,
+		reg2:   reg,
+		flags:  flagModRM | flagMemory | flagImm32,
+		disp:   disp,
+		imm:    int64(v),
+	})
+}
+
 func (a *Assembler) CmpqConst8Mem(v int8, reg uint8, disp int32) {
 	a.push(instruction{
 		prefix: rexW,
@@ -184,6 +199,20 @@ func (a *Assembler) MovlConst32Mem(v int32, reg uint8, disp int32) {
 		disp:   disp,
 		imm:    int64(v),
 	})
+}
+
+func (a *Assembler) MovlConst32Reg(v int32, reg uint8) {
+	a.push(instruction{
+		opcode: 0xB8 + reg,
+		flags:  flagImm32,
+		imm:    int64(v),
+	})
+}
+
+func (a *Assembler) MovqFixup64Reg(reg uint8) int {
+	i := len(a.pending)
+	a.MovqConst64Reg(0, reg)
+	return i
 }
 
 func (a *Assembler) MovqConst64Reg(v int64, reg uint8) {
@@ -316,6 +345,9 @@ func (a *Assembler) link() {
 			a.pending[i].offset = offset
 			offset += int32(inst.size)
 		}
+		// Update length by using last instruction offset and size.
+		last := a.pending[len(a.pending)-1]
+		a.length = int(last.offset + int32(last.size))
 	}
 
 	// Pass 3 (fast, only jumps): assemble jumps.

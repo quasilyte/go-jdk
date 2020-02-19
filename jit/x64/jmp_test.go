@@ -18,7 +18,7 @@ func TestLongJumps(t *testing.T) {
 		asm.Jmp(0)
 		asm.Nop(0x9988)
 		asm.Label(0)
-		checkEncoding(t, asm.Link(), "e988990000")
+		checkEncoding(t, linkToBytes(asm), "e988990000")
 	})
 
 	t.Run("jge", func(t *testing.T) {
@@ -26,6 +26,6 @@ func TestLongJumps(t *testing.T) {
 		asm.Jge(0)
 		asm.Nop(0x6677)
 		asm.Label(0)
-		checkEncoding(t, asm.Link(), "0f8d77660000")
+		checkEncoding(t, linkToBytes(asm), "0f8d77660000")
 	})
 }
