@@ -98,33 +98,6 @@ func main() {
 	}
 }
 
-/*
-main.asmFunc{
-  name:"jump3",
-  lines:[]main.asmLine{
-    main.asmLine{
-      loc:"asmtest.s:15",
-      enc:"90",
-      asm:"NOP1",
-      comment:" asm.Label(0); asm.Nop(1)"
-    },
-    main.asmLine{
-      loc:"asmtest.s:16",
-      enc:"ebfd",
-      asm:"JMP backward",
-      comment:" asm.Jmp(0)"
-    },
-    main.asmLine{
-      loc:"asmtest.s:17",
-      enc:"c3",
-      asm:"RET",
-      comment:"",
-    }
-  }
-}
-
-*/
-
 func runCommand(name string, args ...string) (string, error) {
 	out, err := exec.Command(name, args...).CombinedOutput()
 	if err != nil {
