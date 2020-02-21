@@ -23,7 +23,11 @@
 //
 // func jcall(e *Env, code *byte)
 TEXT ·jcall(SB), 0, $96-16
-        NO_LOCAL_POINTERS // TODO: Can we do without it?
+        // We only use local stack frame to pass Go func arguments.
+        // As long as pointers that are placed there are also
+        // reachable from other parts of the program, we should be fine.
+        // See #32.
+        NO_LOCAL_POINTERS
         MOVQ e+0(FP), DX // env is always at DX
         MOVQ 1*8(DX), SI // stack is always at SI
         MOVQ code+8(FP), CX
