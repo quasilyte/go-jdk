@@ -200,7 +200,12 @@ func (d *Decoder) decodeMethods() error {
 		if err != nil {
 			return fmt.Errorf("method%d: %w", i, err)
 		}
-		methods[i] = Method(field)
+		methods[i] = Method{
+			AccessFlags: MethodAccessFlags(field.AccessFlags),
+			Name:        field.Name,
+			Descriptor:  field.Descriptor,
+			Attrs:       field.Attrs,
+		}
 	}
 	d.f.Methods = methods
 	return nil
@@ -350,7 +355,7 @@ func (d *Decoder) readField() (Field, error) {
 	if err != nil {
 		return f, err
 	}
-	f.AccessFlags = accessFlags
+	f.AccessFlags = FieldAccessFlags(accessFlags)
 	f.Name = d.f.Consts[nameIndex].(*Utf8Const).Value
 	f.Descriptor = d.f.Consts[descriptorIndex].(*Utf8Const).Value
 	f.Attrs = attrs

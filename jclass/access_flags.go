@@ -55,3 +55,5 @@ func (af MethodAccessFlags) IsNative() bool       { return af&0x0100 != 0 }
 func (af MethodAccessFlags) IsAbstract() bool     { return af&0x0400 != 0 }
 func (af MethodAccessFlags) IsStrict() bool       { return af&0x0800 != 0 }
 func (af MethodAccessFlags) IsSynthetic() bool    { return af&0x1000 != 0 }
+
+type FieldAccessFlags uint16

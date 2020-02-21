@@ -42,8 +42,13 @@ func (p *printer) write(format string, args ...interface{}) {
 }
 
 func (p *printer) printMethod(m jclass.Method) {
-	methodName := m.Name
-	p.write("  method %s:\n", methodName)
+	sig := jclass.MethodDescriptor(m.Descriptor).SignatureString(m.Name)
+	if m.AccessFlags.IsNative() {
+		p.write("  native method %s\n", sig)
+		return
+	}
+
+	p.write("  method %s:\n", sig)
 	codeAttr := findAttr(p.c, m.Attrs, "Code").(jclass.CodeAttribute)
 	p.write("    max_locals=%d max_stack=%d\n",
 		codeAttr.MaxLocals, codeAttr.MaxStack)

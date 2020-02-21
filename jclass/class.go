@@ -1,14 +1,14 @@
 package jclass
 
 type Method struct {
-	AccessFlags uint16
+	AccessFlags MethodAccessFlags
 	Name        string
 	Descriptor  string
 	Attrs       []Attribute
 }
 
 type Field struct {
-	AccessFlags uint16
+	AccessFlags FieldAccessFlags
 	Name        string
 	Descriptor  string
 	Attrs       []Attribute
