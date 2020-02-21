@@ -10,9 +10,6 @@
         ADDQ $8, SI \
         JMP fnreg
 
-// $96 bytes for Go call arguments space.
-// $16 bytes for 2 pointer arguments.
-//
 // Register roles:
 // AX - tmp register; also used for return value
 // BX - <unused> (pin to "this" pointer?)
@@ -21,6 +18,8 @@
 // SI - stack pointer
 // DI - <unused>
 //
+// $96 bytes for Go call arguments space.
+// $16 bytes for 2 pointer arguments.
 // func jcall(e *Env, code *byte)
 TEXT ·jcall(SB), 0, $96-16
         // We only use local stack frame to pass Go func arguments.
