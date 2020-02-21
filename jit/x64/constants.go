@@ -33,6 +33,8 @@ const (
 	RCX = 0b001
 	RDX = 0b010
 	RBX = 0b011
+	RSP = 0b100
+	RBP = 0b101
 	RSI = 0b110
 	RDI = 0b111
 )
