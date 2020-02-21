@@ -1,4 +1,5 @@
 #define NOP1 BYTE $0x90
+#define NOSPLIT 4
 
 TEXT testJge1(SB), 0, $0-0
         JGE forward2 // asm.Jge(2)
@@ -149,4 +150,9 @@ TEXT testRaw(SB), 0, $0-0
         MOVL -16(CX), DX // asm.Raw(0x8b, 0x51, 0xf0)
         JMP AX // asm.Raw(0xff, 0xe0)
         CMPQ 6*8(SI), $0 // asm.Raw(0x48, 0x83, 0x7e, 0x30, 0x00)
+        RET
+
+TEXT testCall(SB), NOSPLIT, $0-0
+        CALL AX // asm.CallReg(RAX)
+        CALL BX // asm.CallReg(RBX)
         RET

@@ -59,6 +59,15 @@ func (a *Assembler) Nop(length int) {
 	}
 }
 
+func (a *Assembler) CallReg(reg uint8) {
+	a.push(instruction{
+		opcode: 0xff,
+		reg1:   op2,
+		reg2:   reg,
+		flags:  flagModRM,
+	})
+}
+
 func (a *Assembler) JmpMem(reg uint8, disp int32) {
 	a.push(instruction{
 		opcode: 0xFF,
