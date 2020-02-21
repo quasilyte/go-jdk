@@ -49,14 +49,18 @@ func (ctx *visitorCtx) addClasses(indices []uint16) {
 	}
 }
 
+func (ctx *visitorCtx) addType(typ jclass.DescriptorType) {
+	if typ.IsReference() {
+		ctx.addDependency(typ.Name)
+	}
+}
+
 func (ctx *visitorCtx) addFields() {
 	for _, f := range ctx.classFile.Fields {
 		// TODO: walk attributes
 		desc := jclass.FieldDescriptor(f.Descriptor)
 		typ := desc.GetType()
-		if typ.IsReference() {
-			ctx.addDependency(typ.Name)
-		}
+		ctx.addType(typ)
 	}
 }
 
@@ -64,10 +68,10 @@ func (ctx *visitorCtx) addMethods() {
 	for _, m := range ctx.classFile.Methods {
 		desc := jclass.MethodDescriptor(m.Descriptor)
 		// TODO: walk attributes
+
 		desc.WalkParams(func(typ jclass.DescriptorType) {
-			if typ.IsReference() {
-				ctx.addDependency(typ.Name)
-			}
+			ctx.addType(typ)
 		})
+		ctx.addType(desc.ReturnType())
 	}
 }
