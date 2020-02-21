@@ -32,7 +32,7 @@ func TestJcall(t *testing.T) {
 
 	checkStack := func() {
 		if stack[0] != 1 {
-			t.Errorf("stack[0] mismatch:\nhave: %d\nwant: 1", stack[1])
+			t.Errorf("stack[0] mismatch:\nhave: %d\nwant: 1", stack[0])
 		}
 		if stack[1] != 777 {
 			t.Errorf("stack[1] mismatch:\nhave: %d\nwant: 777", stack[1])
