@@ -7,6 +7,12 @@ import (
 // ClassDependencies returns a list of package names that given class depends on.
 // The list is not sorted.
 func ClassDependencies(c *jclass.File) []string {
+	return nil
+}
+
+func classDependencies(c *jclass.File) []string {
+	// FIXME: should return package names instead of type names.
+
 	visitor := makeVisitor(c)
 	visitor.addClass(c.SuperClass)
 	visitor.addClasses(c.Interfaces)
