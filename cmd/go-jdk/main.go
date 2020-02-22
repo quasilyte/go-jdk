@@ -37,8 +37,8 @@ var subCommands = []*subCommand{
 		Short: "load and run JVM class",
 		Examples: []string{
 			"go-jdk run -help",
-			"go-jdk run /path/to/File.class",
-			"go-jdk run -method add Arith.class 1 2",
+			"go-jdk run -class /path/to/File.class",
+			"go-jdk run -method add -class Arith.class 1 2",
 		},
 	},
 
