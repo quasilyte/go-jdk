@@ -138,45 +138,45 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 	case ir.InstIload:
 		switch a1.Kind {
 		case ir.ArgReg:
-			asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
-			asm.MovlRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
+			asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
+			asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
 		case ir.ArgIntConst:
-			asm.MovlConstMem(a1.Value, x64.RSI, int32(dst.Value*8))
+			asm.MovlConstMem(a1.Value, x64.RSI, regDisp(dst))
 		default:
 			return false
 		}
 
 	case ir.InstIneg:
 		if a1 == dst {
-			asm.NeglMem(x64.RSI, int32(a1.Value*8))
+			asm.NeglMem(x64.RSI, regDisp(a1))
 		} else {
-			asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
+			asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
 			asm.NeglReg(x64.RAX)
-			asm.MovlRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
+			asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
 		}
 	case ir.InstLneg:
 		if a1 == dst {
-			asm.NegqMem(x64.RSI, int32(a1.Value*8))
+			asm.NegqMem(x64.RSI, regDisp(a1))
 		} else {
-			asm.MovqMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
+			asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(a1))
 			asm.NegqReg(x64.RAX)
-			asm.MovqRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
+			asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(dst))
 		}
 
 	case ir.InstIcmp:
 		switch {
 		case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgIntConst:
-			asm.CmplConstMem(a2.Value, x64.RSI, int32(a1.Value*8))
+			asm.CmplConstMem(a2.Value, x64.RSI, regDisp(a1))
 		case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgReg:
-			asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
-			asm.CmplRegMem(x64.RAX, x64.RSI, int32(a2.Value*8))
+			asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
+			asm.CmplRegMem(x64.RAX, x64.RSI, regDisp(a2))
 		default:
 			return false
 		}
 	case ir.InstLcmp:
 		switch {
 		case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgIntConst:
-			asm.CmpqConstMem(a1.Value, x64.RSI, int32(a1.Value*8))
+			asm.CmpqConstMem(a1.Value, x64.RSI, regDisp(a1))
 		default:
 			return false
 		}
@@ -184,7 +184,7 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 	case ir.InstIret:
 		switch a1.Kind {
 		case ir.ArgReg:
-			asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
+			asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
 		case ir.ArgIntConst:
 			asm.MovlConstReg(a1.Value, x64.RAX)
 		default:
@@ -192,7 +192,7 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		}
 		asm.JmpMem(x64.RSI, -8)
 	case ir.InstLret:
-		asm.MovqMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
+		asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(a1))
 		asm.JmpMem(x64.RSI, -8)
 	case ir.InstRet:
 		asm.JmpMem(x64.RSI, -8)
@@ -235,13 +235,13 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 				asm.MovlConstMem(arg.Value, x64.RSI, int32(frameSize+i*8))
 			case ir.ArgReg:
 				// FIXME: argument can be different from reg32.
-				asm.MovlMemReg(x64.RSI, x64.RAX, int32(arg.Value*8))
+				asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(arg))
 				asm.MovlRegMem(x64.RAX, x64.RSI, int32(frameSize+i*8))
 			default:
 				return false
 			}
 		}
-		asm.AddqConstReg(int8(frameSize), x64.RSI)
+		asm.AddqConstReg(int64(frameSize), x64.RSI)
 		{
 			// The magic disp=16 is a width of instructions that
 			// follow lea inside this block.
@@ -251,29 +251,29 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 			asm.JmpReg(x64.RAX)
 			cl.pushReloc(a1.SymbolID(), index)
 		}
-		asm.AddqConstReg(int8(-frameSize), x64.RSI)
+		asm.AddqConstReg(int64(-frameSize), x64.RSI)
 		if dst.Kind != 0 {
 			// If function returns int, should use Movl.
-			asm.MovqRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
+			asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(dst))
 		}
 
 	case ir.InstIadd:
 		if a1 == dst {
 			if a2.Kind == ir.ArgIntConst {
-				asm.AddlConstMem(a2.Value, x64.RSI, int32(dst.Value*8))
+				asm.AddlConstMem(a2.Value, x64.RSI, regDisp(dst))
 			} else {
 				return false
 			}
 		} else {
 			switch {
 			case a2.Kind == ir.ArgIntConst:
-				asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
+				asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
 				asm.AddlConstReg(a2.Value, x64.RAX)
-				asm.MovlRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
+				asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
 			case a2.Kind == ir.ArgReg:
-				asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
-				asm.AddlMemReg(x64.RSI, x64.RAX, int32(a2.Value*8))
-				asm.MovlRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
+				asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
+				asm.AddlMemReg(x64.RSI, x64.RAX, regDisp(a2))
+				asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
 			default:
 				return false
 			}
