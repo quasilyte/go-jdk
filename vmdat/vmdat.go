@@ -2,27 +2,22 @@ package vmdat
 
 import (
 	"sort"
+	"unsafe"
 
 	"github.com/quasilyte/go-jdk/jclass"
 	"github.com/quasilyte/go-jdk/symbol"
 )
 
-type GoFunc struct {
-	Name string
-	Addr uintptr
-}
-
 type State struct {
 	Packages      []*Package
 	pkgname2index map[string]uint32
-	GoFuncs       []GoFunc
-	goname2index  map[string]uint32
+	GoFuncs       map[string]uintptr
 }
 
 func (st *State) Init() {
 	st.Packages = make([]*Package, 0, 32)
+	st.GoFuncs = map[string]uintptr{}
 	st.pkgname2index = map[string]uint32{}
-	st.goname2index = map[string]uint32{}
 }
 
 func (st *State) FindPackage(name string) *Package {
@@ -33,14 +28,15 @@ func (st *State) FindPackage(name string) *Package {
 	return st.Packages[index]
 }
 
-func (st *State) AddGoFunc(fn GoFunc) {
-	index := uint32(len(st.GoFuncs))
-	st.goname2index[fn.Name] = index
-	st.GoFuncs = append(st.GoFuncs, fn)
-}
-
-func (st *State) GoFuncIndex(name string) int {
-	return int(st.goname2index[name])
+func (st *State) BindGoFunc(name string, fn interface{}) {
+	// emptyInterface is the header for an interface{} value.
+	type emptyInterface struct {
+		typ   uintptr
+		value *uintptr
+	}
+	e := (*emptyInterface)(unsafe.Pointer(&fn))
+	addr := *e.value
+	st.GoFuncs[name] = addr
 }
 
 func (st *State) NewPackage(name string) *Package {

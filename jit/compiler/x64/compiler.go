@@ -202,18 +202,31 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		asm.JmpMem(x64.RSI, -8)
 
 	case ir.InstCallGo:
-		// fn := cl.ctx.State.GoFuncs[inst.Args[0].Value]
+		// TODO: refactor and optimize.
+		sym := inst.Args[0].SymbolID()
+		pkg := cl.ctx.State.Packages[sym.PackageIndex()]
+		class := pkg.Classes[sym.ClassIndex()]
+		method := class.Methods[sym.MemberIndex()]
+		key := fmt.Sprintf("%s/%s.%s", pkg.Name, class.Name, method.Name)
+		fnAddr := cl.ctx.State.GoFuncs[key]
+		if fnAddr == 0 {
+			return false
+		}
 		const tmp0offset = 24
 		const envOffset = 16
-		//
-		// for args := fn.Args; args&0x0f != 0; args >>= 4 {
-		// 	fmt.Printf("> %b\n", args&0x0f)
-		// }
-		asm.MovlConst32Mem(1, x64.RBP, -96)
-		asm.MovlConst32Mem(2, x64.RBP, -92)
-		//
+		const arg0offset = -96
+		offset := 0
+		for _, arg := range inst.Args[1:] {
+			switch arg.Kind {
+			case ir.ArgIntConst:
+				asm.MovlConst32Mem(int32(arg.Value), x64.RBP, int32(arg0offset+offset))
+				offset += 4
+			default:
+				return false
+			}
+		}
 		asm.MovqRegMem(x64.RSI, x64.RDX, tmp0offset) // Spill SI
-		// asm.MovlConst32Reg(int32(fn.Addr), x64.RAX)
+		asm.MovlConst32Reg(int32(fnAddr), x64.RAX)
 		asm.CallReg(x64.RAX)
 		asm.MovqMemReg(x64.RBP, x64.RDX, envOffset)  // Load DX
 		asm.MovqMemReg(x64.RDX, x64.RSI, tmp0offset) // Load SI
