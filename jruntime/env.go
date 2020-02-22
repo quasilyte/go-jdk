@@ -1,7 +1,6 @@
 package jruntime
 
 import (
-	"fmt"
 	"sync/atomic"
 	"unsafe"
 
@@ -87,9 +86,7 @@ type envFixed struct {
 }
 
 func (env *Env) IntCall(m *vmdat.Method) (int64, error) {
-	fmt.Println(env.tmp)
 	jcall(env, &m.Code[0])
-	fmt.Printf("%x %x\n", env.stack, env.tmp)
 	return *(*int64)(unsafe.Pointer(env.stack)), nil
 }
 
