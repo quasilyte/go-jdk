@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -31,10 +32,10 @@ func runMain() error {
 	cmd.methodArgs = flag.Args()
 
 	if cmd.classFile == "" {
-		log.Fatalf("-class argument can't be empty")
+		return errors.New("-class argument can't be empty")
 	}
 	if cmd.methodName == "" {
-		log.Fatalf("-method argument can't be empty")
+		return errors.New("-method argument can't be empty")
 	}
 
 	return cmd.run()
