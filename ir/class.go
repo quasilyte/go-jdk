@@ -1,8 +1,8 @@
 package ir
 
 import (
-	"github.com/quasilyte/GopherJRE/jclass"
-	"github.com/quasilyte/GopherJRE/vmdat"
+	"github.com/quasilyte/go-jdk/jclass"
+	"github.com/quasilyte/go-jdk/vmdat"
 )
 
 type Package struct {
@@ -21,7 +21,8 @@ type Class struct {
 }
 
 type Method struct {
-	Code []Inst
+	Code        []Inst
+	AccessFlags jclass.MethodAccessFlags
 
 	Out *vmdat.Method
 }

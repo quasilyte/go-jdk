@@ -9,19 +9,21 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/quasilyte/GopherJRE/cmd/internal/cmdutil"
-	"github.com/quasilyte/GopherJRE/ir"
-	"github.com/quasilyte/GopherJRE/irgen"
-	"github.com/quasilyte/GopherJRE/javap"
-	"github.com/quasilyte/GopherJRE/jit"
-	"github.com/quasilyte/GopherJRE/jruntime"
-	"github.com/quasilyte/GopherJRE/loader"
+	"github.com/quasilyte/go-jdk/cmd/internal/cmdutil"
+	"github.com/quasilyte/go-jdk/ir"
+	"github.com/quasilyte/go-jdk/irgen"
+	"github.com/quasilyte/go-jdk/javap"
+	"github.com/quasilyte/go-jdk/jit"
+	"github.com/quasilyte/go-jdk/jruntime"
+	"github.com/quasilyte/go-jdk/loader"
 )
 
 func main() {
 	var args arguments
 	flag.StringVar(&args.format, "format", "raw",
 		`output format: raw or ir`)
+	flag.StringVar(&args.classPath, "cp", "",
+		`class path to use`)
 	flag.Parse()
 
 	filenames := flag.Args()
@@ -33,7 +35,8 @@ func main() {
 }
 
 type arguments struct {
-	format string
+	format    string
+	classPath string
 }
 
 func printFile(args *arguments, filename string) error {
@@ -56,7 +59,9 @@ func printFile(args *arguments, filename string) error {
 	}
 	defer vm.Close()
 
-	toCompile, err := loader.LoadClass(&vm.State, filename, &loader.Config{})
+	toCompile, err := loader.LoadClass(&vm.State, filename, &loader.Config{
+		ClassPath: []string{args.classPath},
+	})
 	if err != nil {
 		return fmt.Errorf("load class: %v", err)
 	}

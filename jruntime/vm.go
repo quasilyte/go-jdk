@@ -3,10 +3,10 @@ package jruntime
 import (
 	"fmt"
 
-	"github.com/quasilyte/GopherJRE/jit"
-	"github.com/quasilyte/GopherJRE/jit/compiler/x64"
-	"github.com/quasilyte/GopherJRE/mmap"
-	"github.com/quasilyte/GopherJRE/vmdat"
+	"github.com/quasilyte/go-jdk/jit"
+	"github.com/quasilyte/go-jdk/jit/compiler/x64"
+	"github.com/quasilyte/go-jdk/mmap"
+	"github.com/quasilyte/go-jdk/vmdat"
 )
 
 type VM struct {

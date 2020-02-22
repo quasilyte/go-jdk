@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/quasilyte/GopherJRE/ir"
-	"github.com/quasilyte/GopherJRE/jclass"
-	"github.com/quasilyte/GopherJRE/symbol"
-	"github.com/quasilyte/GopherJRE/vmdat"
+	"github.com/quasilyte/go-jdk/ir"
+	"github.com/quasilyte/go-jdk/jclass"
+	"github.com/quasilyte/go-jdk/symbol"
+	"github.com/quasilyte/go-jdk/vmdat"
 )
 
 type Config struct {
@@ -102,6 +102,7 @@ func createPackage(st *vmdat.State, name string, files []*jclass.File) *ir.Packa
 			m := &c.Methods[j]
 			m.Name = f.Methods[j].Name
 			m.Descriptor = f.Methods[j].Descriptor
+			m.AccessFlags = f.Methods[j].AccessFlags
 			m.ID = symbol.NewID(uint64(pkg.Out.ID), uint64(i), uint64(j))
 			irClass.Methods[j].Out = m
 		}

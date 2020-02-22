@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/quasilyte/GopherJRE/cmd/internal/cmdutil"
-	"github.com/quasilyte/GopherJRE/jdeps"
+	"github.com/quasilyte/go-jdk/cmd/internal/cmdutil"
+	"github.com/quasilyte/go-jdk/jdeps"
 )
 
 func main() {

@@ -5,10 +5,10 @@ import (
 	"math"
 	"strings"
 
-	"github.com/quasilyte/GopherJRE/bytecode"
-	"github.com/quasilyte/GopherJRE/ir"
-	"github.com/quasilyte/GopherJRE/jclass"
-	"github.com/quasilyte/GopherJRE/vmdat"
+	"github.com/quasilyte/go-jdk/bytecode"
+	"github.com/quasilyte/go-jdk/ir"
+	"github.com/quasilyte/go-jdk/jclass"
+	"github.com/quasilyte/go-jdk/vmdat"
 )
 
 type generator struct {
@@ -252,10 +252,10 @@ func (g *generator) generate(dst *ir.Method) error {
 			className, pkgName := splitName(m.ClassName)
 			pkg := g.state.FindPackage(pkgName)
 			class := pkg.FindClass(className)
-			symbolID := class.FindMethod(m.Name, m.Descriptor).ID
+			method := class.FindMethod(m.Name, m.Descriptor)
 			argc := argsCount(m.Descriptor)
 			args := make([]ir.Arg, argc+1)
-			args[0] = ir.Arg{Kind: ir.ArgSymbolID, Value: int64(symbolID)}
+			args[0] = ir.Arg{Kind: ir.ArgSymbolID, Value: int64(method.ID)}
 			for i := range args[1:] {
 				args[len(args)-i-1] = g.irArg(i)
 			}
@@ -265,9 +265,13 @@ func (g *generator) generate(dst *ir.Method) error {
 				tmp = g.nextTmp()
 				dst = ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
 			}
+			op := ir.InstCallStatic
+			if method.AccessFlags.IsNative() {
+				op = ir.InstCallGo
+			}
 			g.out = append(g.out, ir.Inst{
 				Dst:  dst,
-				Kind: ir.InstCallStatic,
+				Kind: op,
 				Args: args,
 			})
 			g.drop(argc)

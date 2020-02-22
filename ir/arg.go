@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/quasilyte/GopherJRE/symbol"
+	"github.com/quasilyte/go-jdk/symbol"
 )
 
 // Arg is an instruction argument (sometimes called operand).

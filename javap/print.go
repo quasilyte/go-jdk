@@ -8,8 +8,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/quasilyte/GopherJRE/bytecode"
-	"github.com/quasilyte/GopherJRE/jclass"
+	"github.com/quasilyte/go-jdk/bytecode"
+	"github.com/quasilyte/go-jdk/jclass"
 )
 
 // Fprint pretty-prints c to a given writer.

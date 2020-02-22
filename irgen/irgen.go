@@ -3,8 +3,8 @@ package irgen
 import (
 	"fmt"
 
-	"github.com/quasilyte/GopherJRE/ir"
-	"github.com/quasilyte/GopherJRE/vmdat"
+	"github.com/quasilyte/go-jdk/ir"
+	"github.com/quasilyte/go-jdk/vmdat"
 )
 
 func Generate(st *vmdat.State, packages []*ir.Package) error {
@@ -17,6 +17,9 @@ func Generate(st *vmdat.State, packages []*ir.Package) error {
 			for j := range c.Methods {
 				m := &c.Methods[j]
 				if m.Out.Name == "<init>" {
+					continue
+				}
+				if m.Out.AccessFlags.IsNative() {
 					continue
 				}
 				if err := g.Generate(j, m); err != nil {

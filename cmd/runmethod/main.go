@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/quasilyte/GopherJRE/irgen"
-	"github.com/quasilyte/GopherJRE/jit"
-	"github.com/quasilyte/GopherJRE/jruntime"
-	"github.com/quasilyte/GopherJRE/loader"
-	"github.com/quasilyte/GopherJRE/vmdat"
+	"github.com/quasilyte/go-jdk/irgen"
+	"github.com/quasilyte/go-jdk/jit"
+	"github.com/quasilyte/go-jdk/jruntime"
+	"github.com/quasilyte/go-jdk/loader"
+	"github.com/quasilyte/go-jdk/vmdat"
 )
 
 func main() {

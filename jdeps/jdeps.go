@@ -1,9 +1,11 @@
 package jdeps
 
 import (
-	"github.com/quasilyte/GopherJRE/jclass"
+	"github.com/quasilyte/go-jdk/jclass"
 )
 
+// ClassDependencies returns a list of package names that given class depends on.
+// The list is not sorted.
 func ClassDependencies(c *jclass.File) []string {
 	visitor := makeVisitor(c)
 	visitor.addClass(c.SuperClass)
@@ -14,64 +16,64 @@ func ClassDependencies(c *jclass.File) []string {
 	return visitor.keys()
 }
 
-type visitorCtx struct {
+type depsFinder struct {
 	deps      map[string]struct{}
 	classFile *jclass.File
 }
 
-func makeVisitor(c *jclass.File) visitorCtx {
-	return visitorCtx{map[string]struct{}{}, c}
+func makeVisitor(c *jclass.File) depsFinder {
+	return depsFinder{map[string]struct{}{}, c}
 }
 
-func (ctx *visitorCtx) keys() []string {
-	keys := make([]string, 0, len(ctx.deps))
-	for k, _ := range ctx.deps {
+func (f *depsFinder) keys() []string {
+	keys := make([]string, 0, len(f.deps))
+	for k := range f.deps {
 		keys = append(keys, k)
 	}
 	return keys
 }
 
-func (ctx *visitorCtx) addDependency(d string) {
-	ctx.deps[d] = struct{}{}
+func (f *depsFinder) addDependency(d string) {
+	f.deps[d] = struct{}{}
 }
 
-func (ctx *visitorCtx) addClass(i uint16) {
+func (f *depsFinder) addClass(i uint16) {
 	if i != 0 {
-		if class, ok := ctx.classFile.Consts[i].(*jclass.ClassConst); ok {
-			ctx.addDependency(class.Name)
+		if class, ok := f.classFile.Consts[i].(*jclass.ClassConst); ok {
+			f.addDependency(class.Name)
 		}
 	}
 }
 
-func (ctx *visitorCtx) addClasses(indices []uint16) {
+func (f *depsFinder) addClasses(indices []uint16) {
 	for _, i := range indices {
-		ctx.addClass(i)
+		f.addClass(i)
 	}
 }
 
-func (ctx *visitorCtx) addType(typ jclass.DescriptorType) {
+func (f *depsFinder) addType(typ jclass.DescriptorType) {
 	if typ.IsReference() {
-		ctx.addDependency(typ.Name)
+		f.addDependency(typ.Name)
 	}
 }
 
-func (ctx *visitorCtx) addFields() {
-	for _, f := range ctx.classFile.Fields {
+func (f *depsFinder) addFields() {
+	for _, field := range f.classFile.Fields {
 		// TODO: walk attributes
-		desc := jclass.FieldDescriptor(f.Descriptor)
+		desc := jclass.FieldDescriptor(field.Descriptor)
 		typ := desc.GetType()
-		ctx.addType(typ)
+		f.addType(typ)
 	}
 }
 
-func (ctx *visitorCtx) addMethods() {
-	for _, m := range ctx.classFile.Methods {
+func (f *depsFinder) addMethods() {
+	for _, m := range f.classFile.Methods {
 		desc := jclass.MethodDescriptor(m.Descriptor)
 		// TODO: walk attributes
 
 		desc.WalkParams(func(typ jclass.DescriptorType) {
-			ctx.addType(typ)
+			f.addType(typ)
 		})
-		ctx.addType(desc.ReturnType())
+		f.addType(desc.ReturnType())
 	}
 }

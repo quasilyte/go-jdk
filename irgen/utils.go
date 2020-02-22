@@ -3,8 +3,8 @@ package irgen
 import (
 	"strings"
 
-	"github.com/quasilyte/GopherJRE/ir"
-	"github.com/quasilyte/GopherJRE/jclass"
+	"github.com/quasilyte/go-jdk/ir"
+	"github.com/quasilyte/go-jdk/jclass"
 )
 
 // isJump reports whether inst is a jump instruction.

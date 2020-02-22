@@ -3,7 +3,7 @@ package cmdutil
 import (
 	"os"
 
-	"github.com/quasilyte/GopherJRE/jclass"
+	"github.com/quasilyte/go-jdk/jclass"
 )
 
 func DecodeClassFile(filename string) (*jclass.File, error) {

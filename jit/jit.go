@@ -1,9 +1,9 @@
 package jit
 
 import (
-	"github.com/quasilyte/GopherJRE/ir"
-	"github.com/quasilyte/GopherJRE/mmap"
-	"github.com/quasilyte/GopherJRE/vmdat"
+	"github.com/quasilyte/go-jdk/ir"
+	"github.com/quasilyte/go-jdk/mmap"
+	"github.com/quasilyte/go-jdk/vmdat"
 )
 
 type Context struct {

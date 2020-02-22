@@ -1,10 +1,11 @@
 package jruntime
 
 import (
+	"fmt"
 	"sync/atomic"
 	"unsafe"
 
-	"github.com/quasilyte/GopherJRE/vmdat"
+	"github.com/quasilyte/go-jdk/vmdat"
 )
 
 // TODO(quasilyte): decide whether Env is thread-safe and in what contexts.
@@ -77,16 +78,18 @@ type envFixed struct {
 	// Everything that doesn't need to be aligned carefully can go
 	// into Env struct itself instead.
 
-	allocBytesLeft int64
-
-	stack   *byte
-	objects **Object
+	allocBytesLeft int64    // offset=0
+	stack          *byte    // offset=8
+	objects        **Object // offset=16
+	tmp            uint64   // offset=24
 
 	vm *VM
 }
 
 func (env *Env) IntCall(m *vmdat.Method) (int64, error) {
+	fmt.Println(env.tmp)
 	jcall(env, &m.Code[0])
+	fmt.Printf("%x %x\n", env.stack, env.tmp)
 	return *(*int64)(unsafe.Pointer(env.stack)), nil
 }
 

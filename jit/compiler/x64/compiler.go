@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/quasilyte/GopherJRE/ir"
-	"github.com/quasilyte/GopherJRE/jit"
-	"github.com/quasilyte/GopherJRE/jit/x64"
-	"github.com/quasilyte/GopherJRE/symbol"
-	"github.com/quasilyte/GopherJRE/vmdat"
+	"github.com/quasilyte/go-jdk/ir"
+	"github.com/quasilyte/go-jdk/jit"
+	"github.com/quasilyte/go-jdk/jit/x64"
+	"github.com/quasilyte/go-jdk/symbol"
+	"github.com/quasilyte/go-jdk/vmdat"
 )
 
 // Compiler implements a class compiler for x86-64 (amd64) architecture.
@@ -200,6 +200,23 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		asm.JmpMem(x64.RSI, -8)
 	case ir.InstRet:
 		asm.JmpMem(x64.RSI, -8)
+
+	case ir.InstCallGo:
+		// fn := cl.ctx.State.GoFuncs[inst.Args[0].Value]
+		const tmp0offset = 24
+		const envOffset = 16
+		//
+		// for args := fn.Args; args&0x0f != 0; args >>= 4 {
+		// 	fmt.Printf("> %b\n", args&0x0f)
+		// }
+		asm.MovlConst32Mem(1, x64.RBP, -96)
+		asm.MovlConst32Mem(2, x64.RBP, -92)
+		//
+		asm.MovqRegMem(x64.RSI, x64.RDX, tmp0offset) // Spill SI
+		// asm.MovlConst32Reg(int32(fn.Addr), x64.RAX)
+		asm.CallReg(x64.RAX)
+		asm.MovqMemReg(x64.RBP, x64.RDX, envOffset)  // Load DX
+		asm.MovqMemReg(x64.RDX, x64.RSI, tmp0offset) // Load SI
 
 	case ir.InstCallStatic:
 		frameSize := cl.method.Out.FrameSlots*8 + 8

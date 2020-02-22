@@ -4,9 +4,9 @@ package ir
 
 import "strconv"
 
-const _InstKind_name = "InvalidIloadRetIretLretCallStaticIcmpLcmpJumpJumpEqualJumpNotEqualJumpGtEqIaddLaddFaddIsubInegLnegDaddConvL2IConvF2IConvD2I"
+const _InstKind_name = "InvalidIloadRetIretLretCallStaticCallGoIcmpLcmpJumpJumpEqualJumpNotEqualJumpGtEqIaddLaddFaddIsubInegLnegDaddConvL2IConvF2IConvD2I"
 
-var _InstKind_index = [...]uint8{0, 7, 12, 15, 19, 23, 33, 37, 41, 45, 54, 66, 74, 78, 82, 86, 90, 94, 98, 102, 109, 116, 123}
+var _InstKind_index = [...]uint8{0, 7, 12, 15, 19, 23, 33, 39, 43, 47, 51, 60, 72, 80, 84, 88, 92, 96, 100, 104, 108, 115, 122, 129}
 
 func (i InstKind) String() string {
 	if i < 0 || i >= InstKind(len(_InstKind_index)-1) {

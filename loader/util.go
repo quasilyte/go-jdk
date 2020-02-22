@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/quasilyte/GopherJRE/jclass"
-	"github.com/quasilyte/GopherJRE/jdeps"
-	"github.com/quasilyte/GopherJRE/vmdat"
+	"github.com/quasilyte/go-jdk/jclass"
+	"github.com/quasilyte/go-jdk/jdeps"
+	"github.com/quasilyte/go-jdk/vmdat"
 )
 
 func readClassFiles(name string, cfg *Config) ([]*jclass.File, error) {

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/quasilyte/GopherJRE/mmap"
+	"github.com/quasilyte/go-jdk/mmap"
 )
 
 // TODO(quasilyte): can we make this test less arch-specific?
