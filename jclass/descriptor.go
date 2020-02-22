@@ -57,10 +57,24 @@ func walkDescriptor(s string, visit func(typ DescriptorType)) {
 	}
 }
 
+type FieldDescriptor string
+
+func (d FieldDescriptor) GetType() DescriptorType {
+	var result DescriptorType
+	walkDescriptor(string(d), func(typ DescriptorType) {
+		result = typ
+	})
+	return result
+}
+
 type DescriptorType struct {
 	Name string
 	Kind byte
 	Dims int
+}
+
+func (typ DescriptorType) IsReference() bool {
+	return typ.Kind == 'L'
 }
 
 func (typ DescriptorType) String() string {
