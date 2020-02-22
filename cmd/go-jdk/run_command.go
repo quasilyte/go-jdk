@@ -28,6 +28,8 @@ func runMain() error {
 		`method signature which is required if method is overloaded`)
 	flag.BoolVar(&cmd.verbose, "v", false,
 		`verbose output mode`)
+	flag.StringVar(&cmd.classPath, "cp", "",
+		`class path to use`)
 	flag.Parse()
 	cmd.methodArgs = flag.Args()
 
@@ -46,6 +48,7 @@ type runCommand struct {
 	methodName      string
 	methodSignature string
 	methodArgs      []string
+	classPath       string
 	verbose         bool
 }
 
@@ -99,7 +102,9 @@ func (cmd *runCommand) run() error {
 }
 
 func (cmd *runCommand) loadAndCompileClass(vm *jruntime.VM, filename string) (*vmdat.Class, error) {
-	toCompile, err := loader.LoadClass(&vm.State, filename, &loader.Config{})
+	toCompile, err := loader.LoadClass(&vm.State, filename, &loader.Config{
+		ClassPath: []string{cmd.classPath},
+	})
 	if err != nil {
 		return nil, fmt.Errorf("load class: %v", err)
 	}
