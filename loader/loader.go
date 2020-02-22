@@ -33,6 +33,7 @@ func LoadPackage(st *vmdat.State, pkgName string, cfg *Config) ([]*ir.Package, e
 	if st.FindPackage(pkgName) != nil {
 		return nil, nil // Already loaded
 	}
+
 	pkgFiles, err := readClassFiles(pkgName, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("read %q class files: %v", pkgName, err)
@@ -48,9 +49,15 @@ func loadPackageSet(st *vmdat.State, pkgName string, initial []*jclass.File, cfg
 	toLoad = append(toLoad, pkg)
 	for len(deps) > 0 {
 		d := deps[len(deps)-1]
+		if d == "java/lang" {
+			// We don't support stdlib packages yet.
+			// FIXME: remove this after we handle them properly.
+			deps = deps[:len(deps)-1]
+			continue
+		}
 		files, err := readClassFiles(d, cfg)
 		if err != nil {
-			return nil, fmt.Errorf("find %q class files: %v", d, err)
+			return nil, fmt.Errorf("find %q package: %v", d, err)
 		}
 		pkg := createPackage(st, d, files)
 		toLoad = append(toLoad, pkg)

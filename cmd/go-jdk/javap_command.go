@@ -89,7 +89,7 @@ func (cmd *javapCommand) printFile(filename string) error {
 	fmt.Printf("class %q\n", class.Name)
 	for i := range class.Methods {
 		m := &class.Methods[i]
-		fmt.Printf("  method %s (slots: %d):\n", m.Out.Name, m.Out.FrameSlots)
+		fmt.Printf("  method %s (slots=%d):\n", m.Out.Name, m.Out.FrameSlots)
 		blockIndex := -1
 		for i, inst := range m.Code {
 			if inst.Flags.IsBlockLead() {
