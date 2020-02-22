@@ -141,7 +141,7 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 			asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
 			asm.MovlRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
 		case ir.ArgIntConst:
-			asm.MovlConst32Mem(int32(a1.Value), x64.RSI, int32(dst.Value*8))
+			asm.MovlConstMem(a1.Value, x64.RSI, int32(dst.Value*8))
 		default:
 			return false
 		}
@@ -166,11 +166,7 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 	case ir.InstIcmp:
 		switch {
 		case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgIntConst:
-			if a2.Value >= -128 && a2.Value <= 127 {
-				asm.CmplConst8Mem(int8(a2.Value), x64.RSI, int32(a1.Value*8))
-			} else {
-				asm.CmplConst32Mem(int32(a2.Value), x64.RSI, int32(a1.Value*8))
-			}
+			asm.CmplConstMem(a2.Value, x64.RSI, int32(a1.Value*8))
 		case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgReg:
 			asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
 			asm.CmplRegMem(x64.RAX, x64.RSI, int32(a2.Value*8))
@@ -180,7 +176,7 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 	case ir.InstLcmp:
 		switch {
 		case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgIntConst:
-			asm.CmpqConst8Mem(int8(a1.Value), x64.RSI, int32(a1.Value*8))
+			asm.CmpqConstMem(a1.Value, x64.RSI, int32(a1.Value*8))
 		default:
 			return false
 		}
@@ -190,7 +186,7 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		case ir.ArgReg:
 			asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
 		case ir.ArgIntConst:
-			asm.MovlConst32Reg(int32(a1.Value), x64.RAX)
+			asm.MovlConstReg(a1.Value, x64.RAX)
 		default:
 			return false
 		}
@@ -219,14 +215,14 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		for _, arg := range inst.Args[1:] {
 			switch arg.Kind {
 			case ir.ArgIntConst:
-				asm.MovlConst32Mem(int32(arg.Value), x64.RBP, int32(arg0offset+offset))
+				asm.MovlConstMem(arg.Value, x64.RBP, int32(arg0offset+offset))
 				offset += 4
 			default:
 				return false
 			}
 		}
 		asm.MovqRegMem(x64.RSI, x64.RDX, tmp0offset) // Spill SI
-		asm.MovlConst32Reg(int32(fnAddr), x64.RAX)
+		asm.MovlConstReg(int64(fnAddr), x64.RAX)     // TODO: handle addr higher than int32
 		asm.CallReg(x64.RAX)
 		asm.MovqMemReg(x64.RBP, x64.RDX, envOffset)  // Load DX
 		asm.MovqMemReg(x64.RDX, x64.RSI, tmp0offset) // Load SI
@@ -236,7 +232,7 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		for i, arg := range inst.Args[1:] {
 			switch arg.Kind {
 			case ir.ArgIntConst:
-				asm.MovlConst32Mem(int32(arg.Value), x64.RSI, int32(frameSize+i*8))
+				asm.MovlConstMem(arg.Value, x64.RSI, int32(frameSize+i*8))
 			case ir.ArgReg:
 				// FIXME: argument can be different from reg32.
 				asm.MovlMemReg(x64.RSI, x64.RAX, int32(arg.Value*8))
@@ -245,7 +241,7 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 				return false
 			}
 		}
-		asm.AddqConst8Reg(int8(frameSize), x64.RSI)
+		asm.AddqConstReg(int8(frameSize), x64.RSI)
 		{
 			// The magic disp=16 is a width of instructions that
 			// follow lea inside this block.
@@ -255,7 +251,7 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 			asm.JmpReg(x64.RAX)
 			cl.pushReloc(a1.SymbolID(), index)
 		}
-		asm.AddqConst8Reg(int8(-frameSize), x64.RSI)
+		asm.AddqConstReg(int8(-frameSize), x64.RSI)
 		if dst.Kind != 0 {
 			// If function returns int, should use Movl.
 			asm.MovqRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
@@ -264,7 +260,7 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 	case ir.InstIadd:
 		if a1 == dst {
 			if a2.Kind == ir.ArgIntConst {
-				asm.AddlConst8Mem(int8(a2.Value), x64.RSI, int32(dst.Value*8))
+				asm.AddlConstMem(a2.Value, x64.RSI, int32(dst.Value*8))
 			} else {
 				return false
 			}
@@ -272,7 +268,7 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 			switch {
 			case a2.Kind == ir.ArgIntConst:
 				asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))
-				asm.AddlConst8Reg(int8(a2.Value), x64.RAX)
+				asm.AddlConstReg(a2.Value, x64.RAX)
 				asm.MovlRegMem(x64.RAX, x64.RSI, int32(dst.Value*8))
 			case a2.Kind == ir.ArgReg:
 				asm.MovlMemReg(x64.RSI, x64.RAX, int32(a1.Value*8))

@@ -135,6 +135,14 @@ func (a *Assembler) NegqMem(reg uint8, disp int32) {
 	})
 }
 
+func (a *Assembler) CmplConstMem(v int64, reg uint8, disp int32) {
+	if v >= -128 && v >= 127 {
+		a.CmplConst8Mem(int8(v), reg, disp)
+	} else {
+		a.CmplConst32Mem(int32(v), reg, disp)
+	}
+}
+
 func (a *Assembler) CmplConst8Mem(v int8, reg uint8, disp int32) {
 	a.push(instruction{
 		opcode: 0x83,
@@ -157,6 +165,14 @@ func (a *Assembler) CmplConst32Mem(v int32, reg uint8, disp int32) {
 	})
 }
 
+func (a *Assembler) CmpqConstMem(v int64, reg uint8, disp int32) {
+	if v >= -128 && v >= 127 {
+		a.CmpqConst8Mem(int8(v), reg, disp)
+	} else {
+		a.CmpqConst32Mem(int32(v), reg, disp)
+	}
+}
+
 func (a *Assembler) CmpqConst8Mem(v int8, reg uint8, disp int32) {
 	a.push(instruction{
 		prefix: rexW,
@@ -164,6 +180,18 @@ func (a *Assembler) CmpqConst8Mem(v int8, reg uint8, disp int32) {
 		reg1:   op7,
 		reg2:   reg,
 		flags:  flagModRM | flagMemory | flagImm8,
+		disp:   disp,
+		imm:    int64(v),
+	})
+}
+
+func (a *Assembler) CmpqConst32Mem(v int32, reg uint8, disp int32) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0x81,
+		reg1:   op7,
+		reg2:   reg,
+		flags:  flagModRM | flagMemory | flagImm32,
 		disp:   disp,
 		imm:    int64(v),
 	})
@@ -199,6 +227,10 @@ func (a *Assembler) MovlMemReg(srcreg, dstreg uint8, disp int32) {
 	})
 }
 
+func (a *Assembler) MovlConstMem(v int64, reg uint8, disp int32) {
+	a.MovlConst32Mem(int32(v), reg, disp)
+}
+
 func (a *Assembler) MovlConst32Mem(v int32, reg uint8, disp int32) {
 	a.push(instruction{
 		opcode: 0xC7,
@@ -208,6 +240,10 @@ func (a *Assembler) MovlConst32Mem(v int32, reg uint8, disp int32) {
 		disp:   disp,
 		imm:    int64(v),
 	})
+}
+
+func (a *Assembler) MovlConstReg(v int64, reg uint8) {
+	a.MovlConst32Reg(int32(v), reg)
 }
 
 func (a *Assembler) MovlConst32Reg(v int32, reg uint8) {
@@ -265,6 +301,14 @@ func (a *Assembler) AddlMemReg(srcreg, dstreg uint8, disp int32) {
 	})
 }
 
+func (a *Assembler) AddlConstMem(v int64, reg uint8, disp int32) {
+	if v >= -128 && v >= 127 {
+		a.AddlConst8Mem(int8(v), reg, disp)
+	} else {
+		a.AddlConst32Mem(int32(v), reg, disp)
+	}
+}
+
 func (a *Assembler) AddlConst8Mem(v int8, reg uint8, disp int32) {
 	a.push(instruction{
 		opcode: 0x83,
@@ -274,6 +318,25 @@ func (a *Assembler) AddlConst8Mem(v int8, reg uint8, disp int32) {
 		disp:   disp,
 		imm:    int64(v),
 	})
+}
+
+func (a *Assembler) AddlConst32Mem(v int32, reg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0x81,
+		reg1:   op0,
+		reg2:   reg,
+		flags:  flagModRM | flagMemory | flagImm32,
+		disp:   disp,
+		imm:    int64(v),
+	})
+}
+
+func (a *Assembler) AddlConstReg(v int64, reg uint8) {
+	if v >= -128 && v >= 127 {
+		a.AddlConst8Reg(int8(v), reg)
+	} else {
+		a.AddlConst32Reg(int32(v), reg)
+	}
 }
 
 func (a *Assembler) AddlConst8Reg(v int8, reg uint8) {
@@ -286,6 +349,24 @@ func (a *Assembler) AddlConst8Reg(v int8, reg uint8) {
 	})
 }
 
+func (a *Assembler) AddlConst32Reg(v int32, reg uint8) {
+	a.push(instruction{
+		opcode: 0x81,
+		reg1:   op0,
+		reg2:   reg,
+		flags:  flagModRM | flagImm32,
+		imm:    int64(v),
+	})
+}
+
+func (a *Assembler) AddqConstReg(v int64, reg uint8) {
+	if v >= -128 && v >= 127 {
+		a.AddqConst8Reg(int8(v), reg)
+	} else {
+		a.AddqConst32Reg(int32(v), reg)
+	}
+}
+
 func (a *Assembler) AddqConst8Reg(v int8, reg uint8) {
 	a.push(instruction{
 		prefix: rexW,
@@ -293,6 +374,17 @@ func (a *Assembler) AddqConst8Reg(v int8, reg uint8) {
 		reg1:   op0,
 		reg2:   reg,
 		flags:  flagModRM | flagImm8,
+		imm:    int64(v),
+	})
+}
+
+func (a *Assembler) AddqConst32Reg(v int32, reg uint8) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0x81,
+		reg1:   op0,
+		reg2:   reg,
+		flags:  flagModRM | flagImm32,
 		imm:    int64(v),
 	})
 }

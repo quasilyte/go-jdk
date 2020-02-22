@@ -89,8 +89,10 @@ TEXT testAdd(SB), 0, $0-0
         ADDL 8(SI), AX // asm.AddlMemReg(RSI, RAX, 8)
         ADDL $7, (AX) // asm.AddlConst8Mem(7, RAX, 0)
         ADDL $-9, -8(DX) // asm.AddlConst8Mem(-9, RDX, -8)
+        ADDL $9300, 16(SI) // asm.AddlConst32Mem(9300, RSI, 16)
         ADDL $127, CX // asm.AddlConst8Reg(127, RCX)
         ADDL $-128, BX // asm.AddlConst8Reg(-128, RBX)
+        ADDL $200, BP // asm.AddlConst32Reg(200, RBP)
         ADDQ $0, 0*8(SI) // asm.AddqConst8Mem(0, RSI, 0*8)
         ADDQ $1, 0*8(SI) // asm.AddqConst8Mem(1, RSI, 0*8)
         ADDQ $1, 1*8(SI) // asm.AddqConst8Mem(1, RSI, 1*8)
@@ -102,6 +104,7 @@ TEXT testAdd(SB), 0, $0-0
         ADDQ $-129, 100*8(SI) // asm.AddqConst32Mem(-129, RSI, 100*8)
         ADDQ $1, AX // asm.AddqConst8Reg(1, RAX)
         ADDQ $-1, DI // asm.AddqConst8Reg(-1, RDI)
+        ADDQ $5000, SP // asm.AddqConst32Reg(5000, RSP)
         RET
 
 TEXT testMov(SB), 0, $0-0
@@ -134,6 +137,8 @@ TEXT testCmp(SB), 0, $0-0
         CMPL (DI), $242     // asm.CmplConst32Mem(242, RDI, 0)
         CMPL -8(BX), $-5343 // asm.CmplConst32Mem(-5343, RBX, -8)
         CMPQ 6*8(SI), $0    // asm.CmpqConst8Mem(0, RSI, 6*8)
+        CMPQ (SI), $999     // asm.CmpqConst32Mem(999, RSI, 0)
+        CMPQ 8(DI), $-999   // asm.CmpqConst32Mem(-999, RDI, 8)
         RET
 
 TEXT testNeg(SB), 0, $0-0
