@@ -18,16 +18,16 @@ import (
 )
 
 func javapMain() error {
-	var ctx javapCtx
-	flag.StringVar(&ctx.format, "format", "raw",
+	var cmd javapCommand
+	flag.StringVar(&cmd.format, "format", "raw",
 		`output format: raw or ir`)
-	flag.StringVar(&ctx.classPath, "cp", "",
+	flag.StringVar(&cmd.classPath, "cp", "",
 		`class path to use`)
 	flag.Parse()
 
 	filenames := flag.Args()
 	for _, filename := range filenames {
-		if err := ctx.printFile(filename); err != nil {
+		if err := cmd.printFile(filename); err != nil {
 			return fmt.Errorf("%s: %v", filename, err)
 		}
 	}
@@ -35,13 +35,13 @@ func javapMain() error {
 	return nil
 }
 
-type javapCtx struct {
+type javapCommand struct {
 	format    string
 	classPath string
 }
 
-func (ctx *javapCtx) printFile(filename string) error {
-	if ctx.format == "raw" {
+func (cmd *javapCommand) printFile(filename string) error {
+	if cmd.format == "raw" {
 		jf, err := cmdutil.DecodeClassFile(filename)
 		if err != nil {
 			return fmt.Errorf("decode error: %v", err)
@@ -50,8 +50,8 @@ func (ctx *javapCtx) printFile(filename string) error {
 		return nil
 	}
 
-	if ctx.format != "ir" {
-		return fmt.Errorf("unknown format: %s", ctx.format)
+	if cmd.format != "ir" {
+		return fmt.Errorf("unknown format: %s", cmd.format)
 	}
 
 	vm, err := jruntime.OpenVM(runtime.GOARCH)
@@ -61,7 +61,7 @@ func (ctx *javapCtx) printFile(filename string) error {
 	defer vm.Close()
 
 	toCompile, err := loader.LoadClass(&vm.State, filename, &loader.Config{
-		ClassPath: []string{ctx.classPath},
+		ClassPath: []string{cmd.classPath},
 	})
 	if err != nil {
 		return fmt.Errorf("load class: %v", err)
