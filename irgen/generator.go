@@ -118,7 +118,7 @@ func (g *generator) generate(dst *ir.Method) error {
 			g.st.push(valueDoubleConst, int64(math.Float64bits(1.0)))
 
 		case bytecode.Bipush:
-			ib := code[pc+1]
+			ib := int8(code[pc+1])
 			g.st.push(valueIntConst, int64(ib))
 		case bytecode.Sipush:
 			ib1 := int16(code[pc+1])
