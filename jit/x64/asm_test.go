@@ -263,6 +263,8 @@ func TestAsm(t *testing.T) {
 				{129, "MOVQ 100(BP), DX", "488b5564"},
 				{130, "MOVQ $1, 1(AX)", "48c7400101000000"},
 				{131, "MOVQ $-1, 2(AX)", "48c74002ffffffff"},
+				{132, "MOVQ $0, -96(BP)", "48c745a000000000"},
+				{133, "MOVQ $100, -96(BP)", "48c745a064000000"},
 			},
 			run: func(asm *Assembler) {
 				asm.MovlConst32Mem(0, RSI, 0*8)
@@ -286,21 +288,23 @@ func TestAsm(t *testing.T) {
 				asm.MovqMemReg(RBP, RDX, 100)
 				asm.MovqConst32Mem(1, RAX, 1)
 				asm.MovqConst32Mem(-1, RAX, 2)
+				asm.MovqConst32Mem(0, RBP, -96)
+				asm.MovqConst32Mem(100, RBP, -96)
 			},
 		},
 
 		{
 			name: "testCmp",
 			want: []expected{
-				{135, "CMPL AX, 0*8(DI)", "3b07"},
-				{136, "CMPL BX, 1*8(AX)", "3b5808"},
-				{137, "CMPL 16(SI), $0", "837e1000"},
-				{138, "CMPL (AX), $15", "83380f"},
-				{139, "CMPL (DI), $242", "813ff2000000"},
-				{140, "CMPL -8(BX), $-5343", "817bf821ebffff"},
-				{141, "CMPQ 6*8(SI), $0", "48837e3000"},
-				{142, "CMPQ (SI), $999", "48813ee7030000"},
-				{143, "CMPQ 8(DI), $-999", "48817f0819fcffff"},
+				{137, "CMPL AX, 0*8(DI)", "3b07"},
+				{138, "CMPL BX, 1*8(AX)", "3b5808"},
+				{139, "CMPL 16(SI), $0", "837e1000"},
+				{140, "CMPL (AX), $15", "83380f"},
+				{141, "CMPL (DI), $242", "813ff2000000"},
+				{142, "CMPL -8(BX), $-5343", "817bf821ebffff"},
+				{143, "CMPQ 6*8(SI), $0", "48837e3000"},
+				{144, "CMPQ (SI), $999", "48813ee7030000"},
+				{145, "CMPQ 8(DI), $-999", "48817f0819fcffff"},
 			},
 			run: func(asm *Assembler) {
 				asm.CmplRegMem(RAX, RDI, 0*8)
@@ -318,14 +322,14 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testNeg",
 			want: []expected{
-				{147, "NEGQ 0*8(SI)", "48f71e"},
-				{148, "NEGQ 5*8(AX)", "48f75828"},
-				{149, "NEGL AX", "f7d8"},
-				{150, "NEGL DX", "f7da"},
-				{151, "NEGL (AX)", "f718"},
-				{152, "NEGL 100(BX)", "f75b64"},
-				{153, "NEGQ CX", "48f7d9"},
-				{154, "NEGQ BX", "48f7db"},
+				{149, "NEGQ 0*8(SI)", "48f71e"},
+				{150, "NEGQ 5*8(AX)", "48f75828"},
+				{151, "NEGL AX", "f7d8"},
+				{152, "NEGL DX", "f7da"},
+				{153, "NEGL (AX)", "f718"},
+				{154, "NEGL 100(BX)", "f75b64"},
+				{155, "NEGQ CX", "48f7d9"},
+				{156, "NEGQ BX", "48f7db"},
 			},
 			run: func(asm *Assembler) {
 				asm.NegqMem(RSI, 0*8)
@@ -342,9 +346,9 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testRaw",
 			want: []expected{
-				{158, "MOVL -16(CX), DX", "8b51f0"},
-				{159, "JMP AX", "ffe0"},
-				{160, "CMPQ 6*8(SI), $0", "48837e3000"},
+				{160, "MOVL -16(CX), DX", "8b51f0"},
+				{161, "JMP AX", "ffe0"},
+				{162, "CMPQ 6*8(SI), $0", "48837e3000"},
 			},
 			run: func(asm *Assembler) {
 				asm.Raw(0x8b, 0x51, 0xf0)
@@ -356,8 +360,8 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testCall",
 			want: []expected{
-				{164, "CALL AX", "ffd0"},
-				{165, "CALL BX", "ffd3"},
+				{166, "CALL AX", "ffd0"},
+				{167, "CALL BX", "ffd3"},
 			},
 			run: func(asm *Assembler) {
 				asm.CallReg(RAX)

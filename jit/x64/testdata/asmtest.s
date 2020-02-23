@@ -129,6 +129,8 @@ TEXT testMov(SB), 0, $0-0
         MOVQ 100(BP), DX // asm.MovqMemReg(RBP, RDX, 100)
         MOVQ $1, 1(AX) // asm.MovqConst32Mem(1, RAX, 1)
         MOVQ $-1, 2(AX) // asm.MovqConst32Mem(-1, RAX, 2)
+        MOVQ $0, -96(BP) // asm.MovqConst32Mem(0, RBP, -96)
+        MOVQ $100, -96(BP) // asm.MovqConst32Mem(100, RBP, -96)
         RET
 
 TEXT testCmp(SB), 0, $0-0
