@@ -16,8 +16,10 @@ public class Test {
         int v1 = 120;
         int v2 = -120;
         int v3 = -139438;
+        int v4 = 192394122;
         T.printInt(v1);
         T.printInt(v2);
         T.printInt(v3);
+        T.printInt(v4);
     }
 }
