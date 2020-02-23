@@ -153,8 +153,9 @@ func (g *generator) generate(dst *ir.Method) error {
 			}
 
 		case bytecode.Iload:
-			index := code[pc+1]
-			g.st.push(valueIntLocal, int64(index))
+			g.st.push(valueIntLocal, int64(code[pc+1]))
+		case bytecode.Lload:
+			g.st.push(valueLongLocal, int64(code[pc+1]))
 
 		case bytecode.Iload0, bytecode.Iload1, bytecode.Iload2, bytecode.Iload3:
 			g.st.push(valueIntLocal, int64(op-bytecode.Iload0))
@@ -166,23 +167,13 @@ func (g *generator) generate(dst *ir.Method) error {
 			g.st.push(valueDoubleLocal, int64(op-bytecode.Dload0))
 
 		case bytecode.Istore:
-			index := code[pc+1]
-			dst := ir.Arg{Kind: ir.ArgReg, Value: int64(index)}
-			g.out = append(g.out, ir.Inst{
-				Dst:  dst,
-				Kind: ir.InstIload,
-				Args: []ir.Arg{g.irArg(0)},
-			})
-			g.drop(1)
-
+			g.convertStore(int64(code[pc+1]), ir.InstIload)
+		case bytecode.Lstore:
+			g.convertStore(int64(code[pc+1]), ir.InstLload)
 		case bytecode.Istore0, bytecode.Istore1, bytecode.Istore2, bytecode.Istore3:
-			dst := ir.Arg{Kind: ir.ArgReg, Value: int64(op - bytecode.Istore0)}
-			g.out = append(g.out, ir.Inst{
-				Dst:  dst,
-				Kind: ir.InstIload,
-				Args: []ir.Arg{g.irArg(0)},
-			})
-			g.drop(1)
+			g.convertStore(int64(op-bytecode.Istore0), ir.InstIload)
+		case bytecode.Lstore0, bytecode.Lstore1, bytecode.Lstore2, bytecode.Lstore3:
+			g.convertStore(int64(op-bytecode.Lstore0), ir.InstLload)
 
 		case bytecode.Iadd:
 			g.convertBinOp(ir.InstIadd)
@@ -362,6 +353,16 @@ func (g *generator) convertCondJump(code []byte, pc int, kind ir.InstKind) {
 	if g.st.top().kind != valueFlags {
 		panic(fmt.Sprintf("%s arg is not flags", kind))
 	}
+	g.drop(1)
+}
+
+func (g *generator) convertStore(index int64, kind ir.InstKind) {
+	dst := ir.Arg{Kind: ir.ArgReg, Value: index}
+	g.out = append(g.out, ir.Inst{
+		Dst:  dst,
+		Kind: kind,
+		Args: []ir.Arg{g.irArg(0)},
+	})
 	g.drop(1)
 }
 

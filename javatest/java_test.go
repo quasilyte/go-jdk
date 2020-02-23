@@ -19,7 +19,8 @@ func TestJava(t *testing.T) {
 	requireCommand(t, "java")
 
 	tests := []*testParams{
-		{Pkg: "values", Input: 400},
+		{Pkg: "intvalues", Input: 400},
+		{Pkg: "longvalues", Input: 400},
 		{Pkg: "arith1", Input: 100},
 		{Pkg: "staticcall1"},
 	}
@@ -66,6 +67,7 @@ func runTest(t *testing.T, params *testParams) {
 	defer vm.Close()
 
 	vm.State.BindGoFunc("testutil/T.printInt", golibPrintInt)
+	vm.State.BindGoFunc("testutil/T.printLong", golibPrintLong)
 
 	absTestdata, err := filepath.Abs("testdata")
 	if err != nil {

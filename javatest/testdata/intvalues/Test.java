@@ -1,4 +1,4 @@
-package values;
+package intvalues;
 
 import testutil.T;
 

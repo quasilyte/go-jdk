@@ -5,6 +5,7 @@ import (
 	"unsafe"
 
 	"github.com/quasilyte/go-jdk/ir"
+	"github.com/quasilyte/go-jdk/jclass"
 	"github.com/quasilyte/go-jdk/jit"
 	"github.com/quasilyte/go-jdk/jit/x64"
 	"github.com/quasilyte/go-jdk/symbol"
@@ -135,6 +136,20 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 	case ir.InstJump:
 		asm.Jmp(a1.Value)
 
+	case ir.InstLload:
+		switch a1.Kind {
+		case ir.ArgReg:
+			asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(a1))
+			asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(dst))
+		case ir.ArgIntConst:
+			if !fits32bit(a1.Value) {
+				return false
+			}
+			asm.MovqConst32Mem(int32(a1.Value), x64.RSI, regDisp(dst))
+		default:
+			return false
+		}
+
 	case ir.InstIload:
 		switch a1.Kind {
 		case ir.ArgReg:
@@ -212,6 +227,40 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		const envOffset = 16
 		const arg0offset = -96
 		offset := 0
+		i := 0
+		failed := false
+		jclass.MethodDescriptor(method.Descriptor).WalkParams(func(typ jclass.DescriptorType) {
+			arg := inst.Args[i+1]
+			switch typ.Kind {
+			case 'I':
+				switch arg.Kind {
+				case ir.ArgIntConst:
+					asm.MovlConstMem(arg.Value, x64.RBP, int32(arg0offset+offset))
+				case ir.ArgReg:
+					asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(arg))
+					asm.MovlRegMem(x64.RAX, x64.RBP, int32(arg0offset+offset))
+				}
+				offset += 4
+			case 'J':
+				switch arg.Kind {
+				case ir.ArgIntConst:
+					if !fits32bit(arg.Value) {
+						failed = true
+					}
+					asm.MovqConst32Mem(int32(arg.Value), x64.RBP, int32(arg0offset+offset))
+				case ir.ArgReg:
+					asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(arg))
+					asm.MovqRegMem(x64.RAX, x64.RBP, int32(arg0offset+offset))
+				}
+				offset += 8
+			default:
+				failed = true // TODO: handle all other argument types
+			}
+			i++
+		})
+		if failed {
+			return false
+		}
 		for _, arg := range inst.Args[1:] {
 			switch arg.Kind {
 			case ir.ArgIntConst:
