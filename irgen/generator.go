@@ -152,6 +152,10 @@ func (g *generator) generate(dst *ir.Method) error {
 				panic(fmt.Sprintf("%T const ldc", c))
 			}
 
+		case bytecode.Iload:
+			index := code[pc+1]
+			g.st.push(valueIntLocal, int64(index))
+
 		case bytecode.Iload0, bytecode.Iload1, bytecode.Iload2, bytecode.Iload3:
 			g.st.push(valueIntLocal, int64(op-bytecode.Iload0))
 		case bytecode.Lload0, bytecode.Lload1, bytecode.Lload2, bytecode.Lload3:
@@ -160,6 +164,16 @@ func (g *generator) generate(dst *ir.Method) error {
 			g.st.push(valueFloatLocal, int64(op-bytecode.Fload0))
 		case bytecode.Dload0, bytecode.Dload1, bytecode.Dload2, bytecode.Dload3:
 			g.st.push(valueDoubleLocal, int64(op-bytecode.Dload0))
+
+		case bytecode.Istore:
+			index := code[pc+1]
+			dst := ir.Arg{Kind: ir.ArgReg, Value: int64(index)}
+			g.out = append(g.out, ir.Inst{
+				Dst:  dst,
+				Kind: ir.InstIload,
+				Args: []ir.Arg{g.irArg(0)},
+			})
+			g.drop(1)
 
 		case bytecode.Istore0, bytecode.Istore1, bytecode.Istore2, bytecode.Istore3:
 			dst := ir.Arg{Kind: ir.ArgReg, Value: int64(op - bytecode.Istore0)}
