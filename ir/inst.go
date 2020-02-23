@@ -38,6 +38,7 @@ const (
 	InstInvalid InstKind = iota
 
 	InstIload
+	InstLload
 	InstRet
 	InstIret
 	InstLret
