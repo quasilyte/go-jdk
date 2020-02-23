@@ -217,6 +217,11 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 			case ir.ArgIntConst:
 				asm.MovlConstMem(arg.Value, x64.RBP, int32(arg0offset+offset))
 				offset += 4
+			case ir.ArgReg:
+				// FIXME: check actual register witdth.
+				asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(arg))
+				asm.MovlRegMem(x64.RAX, x64.RBP, int32(arg0offset+offset))
+				offset += 4
 			default:
 				return false
 			}
