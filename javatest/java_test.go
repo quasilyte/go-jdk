@@ -19,9 +19,14 @@ func TestJava(t *testing.T) {
 	requireCommand(t, "java")
 
 	tests := []*testParams{
-		{Pkg: "arith1", Input: 400},
+		{Pkg: "values", Input: 400},
+		{Pkg: "arith1", Input: 100},
 		{Pkg: "staticcall1"},
 	}
+
+	defer func() {
+		_ = os.Remove(filepath.Join("testdata", "Main.java"))
+	}()
 
 	fillTestDefaults(tests)
 	generateJavaMain(t, tests)
