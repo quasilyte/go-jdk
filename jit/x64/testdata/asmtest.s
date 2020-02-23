@@ -127,6 +127,8 @@ TEXT testMov(SB), 0, $0-0
         MOVQ $9223372036854775807, DX // asm.MovqConst64Reg(9223372036854775807, RDX)
         MOVQ $-9223372036854775800, SI // asm.MovqConst64Reg(-9223372036854775800, RSI)
         MOVQ 100(BP), DX // asm.MovqMemReg(RBP, RDX, 100)
+        MOVQ $1, 1(AX) // asm.MovqConst32Mem(1, RAX, 1)
+        MOVQ $-1, 2(AX) // asm.MovqConst32Mem(-1, RAX, 2)
         RET
 
 TEXT testCmp(SB), 0, $0-0

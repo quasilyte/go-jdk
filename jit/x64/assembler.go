@@ -269,6 +269,17 @@ func (a *Assembler) MovqConst64Reg(v int64, reg uint8) {
 	})
 }
 
+func (a *Assembler) MovqConst32Mem(v int32, reg uint8, disp int32) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0xc7,
+		reg1:   reg,
+		flags:  flagModRM | flagMemory | flagImm32,
+		disp:   disp,
+		imm:    int64(v),
+	})
+}
+
 func (a *Assembler) MovqRegMem(srcreg, dstreg uint8, disp int32) {
 	a.push(instruction{
 		prefix: rexW,
