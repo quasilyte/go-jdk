@@ -5,6 +5,7 @@ import (
 	"unsafe"
 
 	"github.com/quasilyte/go-jdk/ir"
+	"github.com/quasilyte/go-jdk/ir/optimizer"
 	"github.com/quasilyte/go-jdk/jclass"
 	"github.com/quasilyte/go-jdk/jit"
 	"github.com/quasilyte/go-jdk/jit/x64"
@@ -63,6 +64,9 @@ func (cl *Compiler) link() {
 }
 
 func (cl *Compiler) compilePackage(p *ir.Package) error {
+	callGraph := optimizer.BuildCallGraph(p)
+
+	optimizer.RunInliner(p, callGraph)
 	for i := range p.Classes {
 		cl.classID = uint64(i)
 		c := &p.Classes[i]
