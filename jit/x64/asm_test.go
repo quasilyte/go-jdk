@@ -368,6 +368,20 @@ func TestAsm(t *testing.T) {
 				asm.CallReg(RBX)
 			},
 		},
+
+		{
+			name: "testSub",
+			want: []expected{
+				{171, "SUBL (AX), DI", "2b38"},
+				{172, "SUBL 16(SI), AX", "2b4610"},
+				{173, "SUBL 640(BX), DX", "2b9380020000"},
+			},
+			run: func(asm *Assembler) {
+				asm.SublMemReg(RAX, RDI, 0)
+				asm.SublMemReg(RSI, RAX, 16)
+				asm.SublMemReg(RBX, RDX, 640)
+			},
+		},
 	}
 
 	for _, test := range tests {

@@ -166,3 +166,9 @@ TEXT testCall(SB), NOSPLIT, $0-0
         CALL AX // asm.CallReg(RAX)
         CALL BX // asm.CallReg(RBX)
         RET
+
+TEXT testSub(SB), 0, $0-0
+        SUBL (AX), DI // asm.SublMemReg(RAX, RDI, 0)
+        SUBL 16(SI), AX // asm.SublMemReg(RSI, RAX, 16)
+        SUBL 640(BX), DX // asm.SublMemReg(RBX, RDX, 640)
+        RET
