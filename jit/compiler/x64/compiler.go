@@ -331,6 +331,28 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 			asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(dst))
 		}
 
+	case ir.InstIsub:
+		// We use negated argument for AddlConstMem for sub with constants.
+		if a1 == dst {
+			if a2.Kind == ir.ArgIntConst {
+				asm.AddlConstMem(-a2.Value, x64.RSI, regDisp(dst))
+			} else {
+				return false
+			}
+		} else {
+			switch {
+			case a2.Kind == ir.ArgIntConst:
+				asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
+				asm.AddlConstReg(-a2.Value, x64.RAX)
+				asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
+			case a2.Kind == ir.ArgReg:
+				asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
+				asm.SublMemReg(x64.RSI, x64.RAX, regDisp(a2))
+				asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
+			default:
+				return false
+			}
+		}
 	case ir.InstIadd:
 		if a1 == dst {
 			if a2.Kind == ir.ArgIntConst {

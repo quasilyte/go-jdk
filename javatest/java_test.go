@@ -14,6 +14,8 @@ import (
 	"github.com/quasilyte/go-jdk/loader"
 )
 
+var testsDebug = os.Getenv("DEBUG") == "true"
+
 func TestJava(t *testing.T) {
 	requireCommand(t, "javac")
 	requireCommand(t, "java")
@@ -21,8 +23,10 @@ func TestJava(t *testing.T) {
 	tests := []*testParams{
 		{Pkg: "intvalues", Input: 400},
 		{Pkg: "longvalues", Input: 400},
+		{Pkg: "scopes"},
 		{Pkg: "arith1", Input: 100},
 		{Pkg: "staticcall1"},
+		{Pkg: "loops1"},
 	}
 
 	defer func() {
@@ -113,6 +117,9 @@ func runTest(t *testing.T, params *testParams) {
 	}
 	have := golibOutput.String()
 	want := runJava(t, params)
+	if testsDebug {
+		t.Logf("Go output:\n%s", have)
+	}
 	if have != want {
 		t.Errorf("output mismatch:\nhave:\n%s\nwant:\n%s", have, want)
 	}

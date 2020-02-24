@@ -12,6 +12,14 @@ public class Test {
         T.printInt(iabs(-1));
         T.printInt(iabs(13924));
 
+        T.printInt(iabs2(0));
+        T.printInt(iabs2(1));
+        T.printInt(iabs2(-1));
+
+        T.printInt(iabs3(0));
+        T.printInt(iabs3(1));
+        T.printInt(iabs3(-1));
+
         T.printLong(labs(0));
         T.printLong(labs(1));
         T.printLong(labs(-1));
@@ -28,6 +36,23 @@ public class Test {
             return -x;
         }
         return x;
+    }
+
+    public static int iabs2(int x) {
+        if (x < 0) {
+            x = -x;
+        }
+        return x;
+    }
+
+    public static int iabs3(int x) {
+        int result = 0;
+        if (x < 0) {
+            result = -x;
+        } else {
+            result = x;
+        }
+        return result;
     }
 
     public static long labs(long x) {
