@@ -2,6 +2,7 @@ package javatest
 
 import (
 	"html/template"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,26 +17,34 @@ import (
 
 var testsDebug = os.Getenv("DEBUG") == "true"
 
-func TestJava(t *testing.T) {
-	requireCommand(t, "javac")
-	requireCommand(t, "java")
+var tests = []*testParams{
+	{Pkg: "intvalues", Input: 400},
+	{Pkg: "longvalues", Input: 400},
+	{Pkg: "scopes"},
+	{Pkg: "arith1", Input: 100},
+	{Pkg: "staticcall1"},
+	{Pkg: "loops1"},
+}
 
-	tests := []*testParams{
-		{Pkg: "intvalues", Input: 400},
-		{Pkg: "longvalues", Input: 400},
-		{Pkg: "scopes"},
-		{Pkg: "arith1", Input: 100},
-		{Pkg: "staticcall1"},
-		{Pkg: "loops1"},
+func TestMain(m *testing.M) {
+	if !hasCommand("java") {
+		log.Println("skip: missing java")
+		return
+	}
+	if !hasCommand("javac") {
+		log.Println("skip: missing javac")
+		return
 	}
 
-	defer func() {
-		_ = os.Remove(filepath.Join("testdata", "Main.java"))
-	}()
-
 	fillTestDefaults(tests)
-	generateJavaMain(t, tests)
-	compileJava(t)
+	generateJavaMain(tests)
+	compileJava()
+	code := m.Run()
+	os.Remove(filepath.Join("testdata", "Main.java"))
+	os.Exit(code)
+}
+
+func TestJava(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Pkg, func(t *testing.T) {
 			runTest(t, test)
@@ -138,7 +147,7 @@ func runJava(t *testing.T, params *testParams) string {
 	return string(out)
 }
 
-func generateJavaMain(t *testing.T, tests []*testParams) {
+func generateJavaMain(tests []*testParams) {
 	tmpl := template.Must(template.New(`Main`).Parse(`
 // Generated automatically by java_test.go.
 // This entry point is used by a host Java implementation.
@@ -158,15 +167,15 @@ class Main {
 `))
 	f, err := os.Create(filepath.Join("testdata", "Main.java"))
 	if err != nil {
-		t.Fatalf("create file: %v", err)
+		log.Fatalf("create file: %v", err)
 	}
 	defer f.Close()
 	if err := tmpl.Execute(f, tests); err != nil {
-		t.Fatalf("execute template: %v", err)
+		log.Fatalf("execute template: %v", err)
 	}
 }
 
-func compileJava(t *testing.T) {
+func compileJava() {
 	// Compilation of Main.java will create class files for all tests.
 	{
 		args := []string{
@@ -175,7 +184,7 @@ func compileJava(t *testing.T) {
 		}
 		out, err := exec.Command("javac", args...).CombinedOutput()
 		if err != nil {
-			t.Fatalf("javac: %v: %s", err, out)
+			log.Fatalf("javac: %v: %s", err, out)
 		}
 	}
 
@@ -187,14 +196,12 @@ func compileJava(t *testing.T) {
 		}
 		out, err := exec.Command("javac", args...).CombinedOutput()
 		if err != nil {
-			t.Fatalf("javac: %v: %s", err, out)
+			log.Fatalf("javac: %v: %s", err, out)
 		}
 	}
 }
 
-func requireCommand(t *testing.T, name string) {
+func hasCommand(name string) bool {
 	err := exec.Command("/bin/sh", "-c", "command -v "+name).Run()
-	if err != nil {
-		t.Skipf("command %s not available", name)
-	}
+	return err == nil
 }
