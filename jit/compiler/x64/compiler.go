@@ -227,10 +227,10 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		const envOffset = 16
 		const arg0offset = -96
 		offset := 0
-		i := 0
+		i := 1
 		failed := false
 		jclass.MethodDescriptor(method.Descriptor).WalkParams(func(typ jclass.DescriptorType) {
-			arg := inst.Args[i+1]
+			arg := inst.Args[i]
 			switch typ.Kind {
 			case 'I':
 				switch arg.Kind {
@@ -239,6 +239,8 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 				case ir.ArgReg:
 					asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(arg))
 					asm.MovlRegMem(x64.RAX, x64.RBP, int32(arg0offset+offset))
+				default:
+					failed = true
 				}
 				offset += 4
 			case 'J':
@@ -251,6 +253,8 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 				case ir.ArgReg:
 					asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(arg))
 					asm.MovqRegMem(x64.RAX, x64.RBP, int32(arg0offset+offset))
+				default:
+					failed = true
 				}
 				offset += 8
 			default:
@@ -261,20 +265,6 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		if failed {
 			return false
 		}
-		for _, arg := range inst.Args[1:] {
-			switch arg.Kind {
-			case ir.ArgIntConst:
-				asm.MovlConstMem(arg.Value, x64.RBP, int32(arg0offset+offset))
-				offset += 4
-			case ir.ArgReg:
-				// FIXME: check actual register witdth.
-				asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(arg))
-				asm.MovlRegMem(x64.RAX, x64.RBP, int32(arg0offset+offset))
-				offset += 4
-			default:
-				return false
-			}
-		}
 		asm.MovqRegMem(x64.RSI, x64.RDX, tmp0offset) // Spill SI
 		asm.MovlConstReg(int64(fnAddr), x64.RAX)     // TODO: handle addr higher than int32
 		asm.CallReg(x64.RAX)
@@ -283,17 +273,47 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 
 	case ir.InstCallStatic:
 		frameSize := cl.method.Out.FrameSlots*8 + 8
-		for i, arg := range inst.Args[1:] {
-			switch arg.Kind {
-			case ir.ArgIntConst:
-				asm.MovlConstMem(arg.Value, x64.RSI, int32(frameSize+i*8))
-			case ir.ArgReg:
-				// FIXME: argument can be different from reg32.
-				asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(arg))
-				asm.MovlRegMem(x64.RAX, x64.RSI, int32(frameSize+i*8))
+		sym := inst.Args[0].SymbolID()
+		pkg := cl.ctx.State.Packages[sym.PackageIndex()]
+		class := pkg.Classes[sym.ClassIndex()]
+		method := class.Methods[sym.MemberIndex()]
+		i := 1
+		failed := false
+		jclass.MethodDescriptor(method.Descriptor).WalkParams(func(typ jclass.DescriptorType) {
+			arg := inst.Args[i]
+			disp := int32(frameSize + (i-1)*8)
+			switch typ.Kind {
+			case 'I':
+				switch arg.Kind {
+				case ir.ArgIntConst:
+					asm.MovlConstMem(arg.Value, x64.RSI, disp)
+				case ir.ArgReg:
+					asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(arg))
+					asm.MovlRegMem(x64.RAX, x64.RSI, disp)
+				default:
+					failed = true
+				}
+				i++
+			case 'J':
+				switch arg.Kind {
+				case ir.ArgIntConst:
+					if !fits32bit(arg.Value) {
+						failed = true
+					}
+					asm.MovqConst32Mem(int32(arg.Value), x64.RSI, disp)
+				case ir.ArgReg:
+					asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(arg))
+					asm.MovqRegMem(x64.RAX, x64.RSI, disp)
+				default:
+					failed = true
+				}
+				i++
 			default:
-				return false
+				failed = true
 			}
+		})
+		if failed {
+			return false
 		}
 		asm.AddqConstReg(int64(frameSize), x64.RSI)
 		{
