@@ -98,13 +98,17 @@ func (cmd *javapCommand) printFile(filename string) error {
 			fmt.Printf("        b%d %3d: %s\n", blockIndex, i, inst)
 		}
 		code := m.Out.Code
+		var codeChunks []string
 		for len(code) != 0 {
 			length := 32
 			if len(code) < length {
 				length = len(code)
 			}
-			fmt.Printf("        %x\n", code[:length])
+			codeChunks = append(codeChunks, fmt.Sprintf("        %x", code[:length]))
 			code = code[length:]
+		}
+		if len(codeChunks) != 0 {
+			fmt.Printf("%s (%d bytes)\n", strings.Join(codeChunks, "\n"), len(m.Out.Code))
 		}
 	}
 
