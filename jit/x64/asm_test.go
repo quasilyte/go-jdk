@@ -260,11 +260,14 @@ func TestAsm(t *testing.T) {
 				{126, "MOVQ $140038723203072, AX", "48b800f0594e5d7f0000"},
 				{127, "MOVQ $9223372036854775807, DX", "48baffffffffffffff7f"},
 				{128, "MOVQ $-9223372036854775800, SI", "48be0800000000000080"},
-				{129, "MOVQ 100(BP), DX", "488b5564"},
-				{130, "MOVQ $1, 1(AX)", "48c7400101000000"},
-				{131, "MOVQ $-1, 2(AX)", "48c74002ffffffff"},
-				{132, "MOVQ $0, -96(BP)", "48c745a000000000"},
-				{133, "MOVQ $100, -96(BP)", "48c745a064000000"},
+				{129, "MOVQ $1423, AX", "48c7c08f050000"},
+				{130, "MOVQ $-23, CX", "48c7c1e9ffffff"},
+				{131, "MOVQ $1, DX", "48c7c201000000"},
+				{132, "MOVQ 100(BP), DX", "488b5564"},
+				{133, "MOVQ $1, 1(AX)", "48c7400101000000"},
+				{134, "MOVQ $-1, 2(AX)", "48c74002ffffffff"},
+				{135, "MOVQ $0, -96(BP)", "48c745a000000000"},
+				{136, "MOVQ $100, -96(BP)", "48c745a064000000"},
 			},
 			run: func(asm *Assembler) {
 				asm.MovlConst32Mem(0, RSI, 0*8)
@@ -285,6 +288,9 @@ func TestAsm(t *testing.T) {
 				asm.MovqConst64Reg(140038723203072, RAX)
 				asm.MovqConst64Reg(9223372036854775807, RDX)
 				asm.MovqConst64Reg(-9223372036854775800, RSI)
+				asm.MovqConst32Reg(1423, RAX)
+				asm.MovqConst32Reg(-23, RCX)
+				asm.MovqConst32Reg(1, RDX)
 				asm.MovqMemReg(RBP, RDX, 100)
 				asm.MovqConst32Mem(1, RAX, 1)
 				asm.MovqConst32Mem(-1, RAX, 2)
@@ -296,15 +302,15 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testCmp",
 			want: []expected{
-				{137, "CMPL AX, 0*8(DI)", "3b07"},
-				{138, "CMPL BX, 1*8(AX)", "3b5808"},
-				{139, "CMPL 16(SI), $0", "837e1000"},
-				{140, "CMPL (AX), $15", "83380f"},
-				{141, "CMPL (DI), $242", "813ff2000000"},
-				{142, "CMPL -8(BX), $-5343", "817bf821ebffff"},
-				{143, "CMPQ 6*8(SI), $0", "48837e3000"},
-				{144, "CMPQ (SI), $999", "48813ee7030000"},
-				{145, "CMPQ 8(DI), $-999", "48817f0819fcffff"},
+				{140, "CMPL AX, 0*8(DI)", "3b07"},
+				{141, "CMPL BX, 1*8(AX)", "3b5808"},
+				{142, "CMPL 16(SI), $0", "837e1000"},
+				{143, "CMPL (AX), $15", "83380f"},
+				{144, "CMPL (DI), $242", "813ff2000000"},
+				{145, "CMPL -8(BX), $-5343", "817bf821ebffff"},
+				{146, "CMPQ 6*8(SI), $0", "48837e3000"},
+				{147, "CMPQ (SI), $999", "48813ee7030000"},
+				{148, "CMPQ 8(DI), $-999", "48817f0819fcffff"},
 			},
 			run: func(asm *Assembler) {
 				asm.CmplRegMem(RAX, RDI, 0*8)
@@ -322,14 +328,14 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testNeg",
 			want: []expected{
-				{149, "NEGQ 0*8(SI)", "48f71e"},
-				{150, "NEGQ 5*8(AX)", "48f75828"},
-				{151, "NEGL AX", "f7d8"},
-				{152, "NEGL DX", "f7da"},
-				{153, "NEGL (AX)", "f718"},
-				{154, "NEGL 100(BX)", "f75b64"},
-				{155, "NEGQ CX", "48f7d9"},
-				{156, "NEGQ BX", "48f7db"},
+				{152, "NEGQ 0*8(SI)", "48f71e"},
+				{153, "NEGQ 5*8(AX)", "48f75828"},
+				{154, "NEGL AX", "f7d8"},
+				{155, "NEGL DX", "f7da"},
+				{156, "NEGL (AX)", "f718"},
+				{157, "NEGL 100(BX)", "f75b64"},
+				{158, "NEGQ CX", "48f7d9"},
+				{159, "NEGQ BX", "48f7db"},
 			},
 			run: func(asm *Assembler) {
 				asm.NegqMem(RSI, 0*8)
@@ -346,9 +352,9 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testRaw",
 			want: []expected{
-				{160, "MOVL -16(CX), DX", "8b51f0"},
-				{161, "JMP AX", "ffe0"},
-				{162, "CMPQ 6*8(SI), $0", "48837e3000"},
+				{163, "MOVL -16(CX), DX", "8b51f0"},
+				{164, "JMP AX", "ffe0"},
+				{165, "CMPQ 6*8(SI), $0", "48837e3000"},
 			},
 			run: func(asm *Assembler) {
 				asm.Raw(0x8b, 0x51, 0xf0)
@@ -360,8 +366,8 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testCall",
 			want: []expected{
-				{166, "CALL AX", "ffd0"},
-				{167, "CALL BX", "ffd3"},
+				{169, "CALL AX", "ffd0"},
+				{170, "CALL BX", "ffd3"},
 			},
 			run: func(asm *Assembler) {
 				asm.CallReg(RAX)
@@ -372,9 +378,9 @@ func TestAsm(t *testing.T) {
 		{
 			name: "testSub",
 			want: []expected{
-				{171, "SUBL (AX), DI", "2b38"},
-				{172, "SUBL 16(SI), AX", "2b4610"},
-				{173, "SUBL 640(BX), DX", "2b9380020000"},
+				{174, "SUBL (AX), DI", "2b38"},
+				{175, "SUBL 16(SI), AX", "2b4610"},
+				{176, "SUBL 640(BX), DX", "2b9380020000"},
 			},
 			run: func(asm *Assembler) {
 				asm.SublMemReg(RAX, RDI, 0)

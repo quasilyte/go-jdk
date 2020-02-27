@@ -25,6 +25,7 @@ public class Test {
         T.printLong(labs(-1));
         T.printLong(labs(-15));
         T.printLong(labs(13));
+        T.printLong(lucky7());
     }
 
     public static int add(int x, int y) {
@@ -65,4 +66,6 @@ public class Test {
         }
         return x;
     }
+
+    public static long lucky7() { return 777; }
 }

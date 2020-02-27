@@ -1,5 +1,7 @@
 package x64
 
+import "math"
+
 func NewAssembler() *Assembler {
 	return &Assembler{
 		pending: make([]instruction, 0, 256),
@@ -258,6 +260,25 @@ func (a *Assembler) MovqFixup64Reg(reg uint8) int {
 	i := len(a.pending)
 	a.MovqConst64Reg(0, reg)
 	return i
+}
+
+func (a *Assembler) MovqConstReg(v int64, reg uint8) {
+	if v >= math.MinInt32 && v <= math.MaxInt32 {
+		a.MovqConst32Reg(int32(v), reg)
+	} else {
+		a.MovqConst64Reg(v, reg)
+	}
+}
+
+func (a *Assembler) MovqConst32Reg(v int32, reg uint8) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0xC7,
+		reg1:   op0,
+		reg2:   reg,
+		flags:  flagImm32 | flagModRM,
+		imm:    int64(v),
+	})
 }
 
 func (a *Assembler) MovqConst64Reg(v int64, reg uint8) {

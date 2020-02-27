@@ -208,7 +208,15 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		}
 		asm.JmpMem(x64.RSI, -8)
 	case ir.InstLret:
-		asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(a1))
+		switch a1.Kind {
+		case ir.ArgReg:
+			asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(a1))
+		case ir.ArgIntConst:
+			if !fits32bit(a1.Value) {
+				return false
+			}
+			asm.MovqConstReg(a1.Value, x64.RAX)
+		}
 		asm.JmpMem(x64.RSI, -8)
 	case ir.InstRet:
 		asm.JmpMem(x64.RSI, -8)
