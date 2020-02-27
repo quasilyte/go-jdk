@@ -300,7 +300,7 @@ func (d *Decoder) readAttr() (Attribute, error) {
 		}
 		handlersCount, err := d.readUint16()
 		if err != nil {
-			return nil, fmt.Errorf("read exception_table_length")
+			return nil, fmt.Errorf("read exception_table_length: %v", err)
 		}
 		handlers := make([]ExceptionHandler, handlersCount)
 		for i := range handlers {
@@ -322,6 +322,13 @@ func (d *Decoder) readAttr() (Attribute, error) {
 			Attrs:          attrs,
 		}
 
+	case "StackMapTable":
+		frames, err := d.readStackMapFrames()
+		if err != nil {
+			return nil, fmt.Errorf("read stack map frames: %v", err)
+		}
+		attr = StackMapTableAttribute{Frames: frames}
+
 	default:
 		buf := make([]byte, length)
 		_, err = io.ReadFull(d.r, buf)
@@ -335,6 +342,78 @@ func (d *Decoder) readAttr() (Attribute, error) {
 	}
 
 	return attr, nil
+}
+
+func (d *Decoder) skipVerificationTypes(n int) error {
+	// We could use verification info at some point in future.
+	// Right now we skip it completely.
+	const (
+		itemTop               = 0
+		itemInteger           = 1
+		itemFloat             = 2
+		itemDouble            = 3
+		itemLong              = 4
+		itemNull              = 5
+		itemUninitializedThis = 6
+		itemObject            = 7
+		itemUninitialized     = 8
+	)
+
+	for i := 0; i < n; i++ {
+		tag, err := d.r.ReadByte()
+		if err != nil {
+			return fmt.Errorf("verification_type_info%d: read tag: %v", i, err)
+		}
+		switch tag {
+		case itemUninitialized, itemObject:
+			_, err = d.r.Discard(1)
+			if err != nil {
+				return fmt.Errorf("verification_type_info%d: tag=%d: %v", i, tag, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (d *Decoder) readStackMapFrames() ([]StackMapFrame, error) {
+	framesCount, err := d.readUint16()
+	if err != nil {
+		return nil, fmt.Errorf("read number_of_entries: %v", err)
+	}
+	frames := make([]StackMapFrame, framesCount)
+	offset := uint32(0)
+	for i := range frames {
+		tag, err := d.r.ReadByte()
+		if err != nil {
+			return nil, fmt.Errorf("frame%d: read type: %v", i, err)
+		}
+
+		depth := uint16(0)
+		switch {
+		case tag <= 63: // 0-63 same_frame
+			offset += uint32(tag)
+		case tag <= 127: // 64-127 same_locals_1_stack_item_frame
+			offset += uint32(tag - 64)
+			depth = 1
+			err = d.skipVerificationTypes(1)
+		default:
+			return nil, fmt.Errorf("unexpected tag: %d", tag)
+		}
+
+		if err != nil {
+			return nil, fmt.Errorf("frame%d: %v", i, err)
+		}
+		if i != 0 {
+			offset++
+		}
+
+		frame := &frames[i]
+		frame.Offset = offset
+		frame.StackDepth = depth
+	}
+
+	return frames, nil
 }
 
 func (d *Decoder) readField() (Field, error) {
