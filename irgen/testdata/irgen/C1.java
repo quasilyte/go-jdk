@@ -20,4 +20,35 @@ class C1 {
         }
         return x;
     }
+
+    // slots=3
+    //   b0 flags = Lcmp r0 0
+    //   b0 JumpGtEq label0 flags
+    //   b1 r2 = Lneg r0
+    //   b1 Jump label1
+    // label0:
+    //   b2 r2 = Lload r0
+    // label1:
+    //   b3 Lret r2
+    public static long labs(long x) {
+        return (x < 0) ? -x : x;
+    }
+
+    // slots=4
+    //   b0 flags = Icmp r0 1
+    //   b0 JumpGt label0 flags
+    //   b1 Iret r0
+    // label0:
+    //   b2 r1 = Isub r0 1
+    //   b2 r2 = CallStatic fib r1
+    //   b2 r1 = Isub r0 2
+    //   b2 r3 = CallStatic fib r1
+    //   b2 r1 = Iadd r2 r3
+    //   b2 Iret r1
+    public static int fib(int n) {
+        if (n <= 1) {
+            return n;
+        }
+        return fib(n-1) + fib(n-2);
+    }
 }
