@@ -337,6 +337,16 @@ func (a *Assembler) SublMemReg(srcreg, dstreg uint8, disp int32) {
 	})
 }
 
+func (a *Assembler) ImullMemReg(srcreg, dstreg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0xAF,
+		reg1:   dstreg,
+		reg2:   srcreg,
+		flags:  flag0F | flagModRM | flagMemory,
+		disp:   disp,
+	})
+}
+
 func (a *Assembler) AddlMemReg(srcreg, dstreg uint8, disp int32) {
 	a.push(instruction{
 		opcode: 0x03,

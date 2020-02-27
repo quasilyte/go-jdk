@@ -51,4 +51,20 @@ class C1 {
         }
         return fib(n-1) + fib(n-2);
     }
+
+    // slots=3
+    //   b0 flags = Icmp r0 1
+    //   b0 JumpGtEq label0 flags
+    //   b1 Iret 1
+    // label0:
+    //   b2 r1 = Isub r0 1
+    //   b2 r2 = CallStatic factorial r1
+    //   b2 r1 = Imul r0 r2
+    //   b2 Iret r1
+    public static int factorial(int n) {
+        if (n < 1) {
+            return 1;
+        }
+        return n * factorial(n-1);
+    }
 }

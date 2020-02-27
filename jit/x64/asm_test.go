@@ -429,6 +429,20 @@ func TestAsm(t *testing.T) {
 				asm.Jgt(3)
 			},
 		},
+
+		{
+			name: "testImul",
+			want: []expected{
+				{201, "IMULL (AX), CX", "0faf08"},
+				{202, "IMULL 4(SI), CX", "0faf4e04"},
+				{203, "IMULL -8(DX), AX", "0faf42f8"},
+			},
+			run: func(asm *Assembler) {
+				asm.ImullMemReg(RAX, RCX, 0)
+				asm.ImullMemReg(RSI, RCX, 4)
+				asm.ImullMemReg(RDX, RAX, -8)
+			},
+		},
 	}
 
 	for _, test := range tests {

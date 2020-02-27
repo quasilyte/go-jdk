@@ -23,21 +23,22 @@ func _() {
 	_ = x[InstJumpNotEqual-12]
 	_ = x[InstJumpGtEq-13]
 	_ = x[InstJumpGt-14]
-	_ = x[InstIadd-15]
-	_ = x[InstLadd-16]
-	_ = x[InstFadd-17]
-	_ = x[InstIsub-18]
-	_ = x[InstIneg-19]
-	_ = x[InstLneg-20]
-	_ = x[InstDadd-21]
-	_ = x[InstConvL2I-22]
-	_ = x[InstConvF2I-23]
-	_ = x[InstConvD2I-24]
+	_ = x[InstImul-15]
+	_ = x[InstIadd-16]
+	_ = x[InstLadd-17]
+	_ = x[InstFadd-18]
+	_ = x[InstIsub-19]
+	_ = x[InstIneg-20]
+	_ = x[InstLneg-21]
+	_ = x[InstDadd-22]
+	_ = x[InstConvL2I-23]
+	_ = x[InstConvF2I-24]
+	_ = x[InstConvD2I-25]
 }
 
-const _InstKind_name = "InvalidIloadLloadRetIretLretCallStaticCallGoIcmpLcmpJumpJumpEqualJumpNotEqualJumpGtEqJumpGtIaddLaddFaddIsubInegLnegDaddConvL2IConvF2IConvD2I"
+const _InstKind_name = "InvalidIloadLloadRetIretLretCallStaticCallGoIcmpLcmpJumpJumpEqualJumpNotEqualJumpGtEqJumpGtImulIaddLaddFaddIsubInegLnegDaddConvL2IConvF2IConvD2I"
 
-var _InstKind_index = [...]uint8{0, 7, 12, 17, 20, 24, 28, 38, 44, 48, 52, 56, 65, 77, 85, 91, 95, 99, 103, 107, 111, 115, 119, 126, 133, 140}
+var _InstKind_index = [...]uint8{0, 7, 12, 17, 20, 24, 28, 38, 44, 48, 52, 56, 65, 77, 85, 91, 95, 99, 103, 107, 111, 115, 119, 123, 130, 137, 144}
 
 func (i InstKind) String() string {
 	if i < 0 || i >= InstKind(len(_InstKind_index)-1) {

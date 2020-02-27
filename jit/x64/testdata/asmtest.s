@@ -196,3 +196,9 @@ l1:
         NOP1   // asm.Label(1); asm.Nop(1)
         JGT l3 // asm.Jgt(3)
         RET
+
+TEXT testImul(SB), 0, $0-0
+        IMULL (AX), CX // asm.ImullMemReg(RAX, RCX, 0)
+        IMULL 4(SI), CX // asm.ImullMemReg(RSI, RCX, 4)
+        IMULL -8(DX), AX // asm.ImullMemReg(RDX, RAX, -8)
+        RET

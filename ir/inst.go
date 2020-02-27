@@ -51,6 +51,7 @@ const (
 	InstJumpNotEqual
 	InstJumpGtEq
 	InstJumpGt
+	InstImul
 	InstIadd
 	InstLadd
 	InstFadd

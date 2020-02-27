@@ -406,6 +406,15 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 				return false
 			}
 		}
+	case ir.InstImul:
+		switch {
+		case a2.Kind == ir.ArgReg:
+			asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
+			asm.ImullMemReg(x64.RSI, x64.RAX, regDisp(a2))
+			asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
+		default:
+			return false
+		}
 
 	default:
 		return false
