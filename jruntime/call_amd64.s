@@ -5,7 +5,7 @@
 // encode `lea rax, [rip+N]` instruction manually, byte-by-byte.
 // N is the length of all instructions in this macro block.
 #define JCALL(fnreg) \
-        BYTE $0x48; BYTE $0x8d; BYTE $0x05; BYTE $0x09; BYTE $0; BYTE $0; BYTE $0; \
+        BYTE $0x48; BYTE $0x8d; BYTE $0x05; BYTE $9; BYTE $0; BYTE $0; BYTE $0; \
         MOVQ AX, (SI) \
         ADDQ $8, SI \
         JMP fnreg
@@ -33,3 +33,6 @@ TEXT ·jcall(SB), 0, $96-16
         JCALL(CX)
         MOVQ AX, -8(SI) // Save called function result, if any
         RET
+gocall:
+        CALL CX
+        JMP -8(BP)

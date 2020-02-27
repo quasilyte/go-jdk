@@ -1,6 +1,7 @@
 package javatest
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/quasilyte/go-jdk/jit"
 	"github.com/quasilyte/go-jdk/jruntime"
 	"github.com/quasilyte/go-jdk/loader"
+	"github.com/quasilyte/go-jdk/vmdat"
 )
 
 var testsDebug = os.Getenv("DEBUG") == "true"
@@ -52,6 +54,26 @@ func TestJava(t *testing.T) {
 	}
 }
 
+func BenchmarkJava(b *testing.B) {
+	benchmarks := []*benchParams{
+		{
+			Method: "nop",
+		},
+
+		{
+			Method: "callGoNop",
+			Ops:    5,
+		},
+	}
+	runBenchmarks(b, benchmarks)
+}
+
+type benchParams struct {
+	Name   string
+	Method string
+	Ops    int
+}
+
 type testParams struct {
 	Pkg string
 
@@ -72,6 +94,38 @@ func fillTestDefaults(tests []*testParams) {
 	}
 }
 
+func runBenchmarks(b *testing.B, benchmarks []*benchParams) {
+	vm, err := jruntime.OpenVM(runtime.GOARCH)
+	if err != nil {
+		b.Fatalf("open VM: %v", err)
+	}
+	defer vm.Close()
+
+	vm.State.BindGoFunc("benchutil/B.nop", golibNop)
+
+	pkg, err := loadAndCompilePackage(vm, "bench")
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	for _, params := range benchmarks {
+		method, err := findMethod(pkg, "Bench", params.Method)
+		if err != nil {
+			b.Fatal(err)
+		}
+		b.Run(params.Method, func(b *testing.B) {
+			n := b.N
+			if params.Ops > 1 && b.N != 1 {
+				n /= params.Ops
+			}
+			env := jruntime.NewEnv(vm, &jruntime.EnvConfig{})
+			for i := 0; i < n; i++ {
+				env.IntCall(method)
+			}
+		})
+	}
+}
+
 func runTest(t *testing.T, params *testParams) {
 	vm, err := jruntime.OpenVM(runtime.GOARCH)
 	if err != nil {
@@ -82,37 +136,14 @@ func runTest(t *testing.T, params *testParams) {
 	vm.State.BindGoFunc("testutil/T.printInt", golibPrintInt)
 	vm.State.BindGoFunc("testutil/T.printLong", golibPrintLong)
 
-	absTestdata, err := filepath.Abs("testdata")
+	pkg, err := loadAndCompilePackage(vm, params.Pkg)
 	if err != nil {
-		t.Fatalf("abs(testdata): %v", err)
-	}
-	packages, err := loader.LoadPackage(&vm.State, params.Pkg, &loader.Config{
-		ClassPath: []string{
-			absTestdata,
-			filepath.Join(absTestdata, "_golib"),
-		},
-	})
-	if err != nil {
-		t.Fatalf("load package: %v", err)
-	}
-	if err := irgen.Generate(&vm.State, packages); err != nil {
-		t.Fatalf("irgen: %v", err)
-	}
-	ctx := jit.Context{
-		Mmap:  &vm.Mmap,
-		State: &vm.State,
-	}
-	if err := vm.Compiler.Compile(ctx, packages); err != nil {
-		t.Fatalf("compile: %v", err)
+		t.Fatal(err)
 	}
 
-	class := packages[0].Out.FindClass(params.EntryClass)
-	if class == nil {
-		t.Fatalf("entry class %s not found", params.EntryClass)
-	}
-	method := class.FindMethod(params.EntryMethod, "")
-	if method == nil {
-		t.Fatalf("entry method %s not found", params.EntryMethod)
+	method, err := findMethod(pkg, params.EntryClass, params.EntryMethod)
+	if err != nil {
+		t.Fatal(err)
 	}
 	if method.Descriptor != "(I)V" {
 		t.Fatalf("entry method signature should be: void %s()", params.EntryMethod)
@@ -176,6 +207,8 @@ class Main {
 }
 
 func compileJava() {
+	// TODO: compile with 1 javac call instead of 2?
+
 	// Compilation of Main.java will create class files for all tests.
 	{
 		args := []string{
@@ -193,12 +226,57 @@ func compileJava() {
 		args := []string{
 			"-cp", "testdata/_golib",
 			"testdata/_golib/testutil/T.java",
+			"testdata/_golib/benchutil/B.java",
+			"testdata/bench/Bench.java",
 		}
 		out, err := exec.Command("javac", args...).CombinedOutput()
 		if err != nil {
 			log.Fatalf("javac: %v: %s", err, out)
 		}
 	}
+}
+
+func findMethod(pkg *vmdat.Package, className, methodName string) (*vmdat.Method, error) {
+	class := pkg.FindClass(className)
+	if class == nil {
+		return nil, fmt.Errorf("class %s not found in %s", className, pkg.Name)
+	}
+	method := class.FindMethod(methodName, "")
+	if method == nil {
+		return nil, fmt.Errorf("method %s not found in %s", methodName, class.Name)
+	}
+	return method, nil
+}
+
+func loadAndCompilePackage(vm *jruntime.VM, pkg string) (*vmdat.Package, error) {
+	absTestdata, err := filepath.Abs("testdata")
+	if err != nil {
+		return nil, err
+	}
+	packages, err := loader.LoadPackage(&vm.State, pkg, &loader.Config{
+		ClassPath: []string{
+			absTestdata,
+			filepath.Join(absTestdata, "_golib"),
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load %s: %v", pkg, err)
+	}
+
+	if err := irgen.Generate(&vm.State, packages); err != nil {
+		return nil, fmt.Errorf("irgen: %v", err)
+	}
+
+	ctx := jit.Context{
+		Mmap:      &vm.Mmap,
+		State:     &vm.State,
+		JcallAddr: jruntime.JcallAddr,
+	}
+	if err := vm.Compiler.Compile(ctx, packages); err != nil {
+		return nil, fmt.Errorf("compile: %v", err)
+	}
+
+	return packages[0].Out, nil
 }
 
 func hasCommand(name string) bool {

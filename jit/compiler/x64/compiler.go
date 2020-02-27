@@ -223,9 +223,13 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		if fnAddr == 0 {
 			return false
 		}
-		const tmp0offset = 24
-		const envOffset = 16
-		const arg0offset = -96
+		const (
+			arg0offset   = -96
+			gocallOffset = 73
+			frameSize    = 96
+			tmp0offset   = 24
+			envOffset    = 16
+		)
 		offset := 0
 		i := 1
 		failed := false
@@ -266,8 +270,11 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 			return false
 		}
 		asm.MovqRegMem(x64.RSI, x64.RDX, tmp0offset) // Spill SI
-		asm.MovlConstReg(int64(fnAddr), x64.RAX)     // TODO: handle addr higher than int32
-		asm.CallReg(x64.RAX)
+		asm.MovlConstReg(int64(fnAddr), x64.RCX)
+		asm.MovlConstReg(int64(cl.ctx.JcallAddr+gocallOffset), x64.RDI)
+		asm.Raw(0x48, 0x8d, 0x05, 4+2, 0, 0, 0)
+		asm.MovqRegMem(x64.RAX, x64.RBP, -8)
+		asm.JmpReg(x64.RDI)
 		asm.MovqMemReg(x64.RBP, x64.RDX, envOffset)  // Load DX
 		asm.MovqMemReg(x64.RDX, x64.RSI, tmp0offset) // Load SI
 

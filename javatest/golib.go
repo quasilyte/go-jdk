@@ -7,6 +7,8 @@ import (
 
 var golibOutput bytes.Buffer
 
+func golibNop() {}
+
 func golibPrintInt(x int32) {
 	fmt.Fprintf(&golibOutput, "%d\n", x)
 }
