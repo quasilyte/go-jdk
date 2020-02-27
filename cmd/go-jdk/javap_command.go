@@ -10,6 +10,7 @@ import (
 
 	"github.com/quasilyte/go-jdk/cmd/internal/cmdutil"
 	"github.com/quasilyte/go-jdk/ir"
+	"github.com/quasilyte/go-jdk/irfmt"
 	"github.com/quasilyte/go-jdk/irgen"
 	"github.com/quasilyte/go-jdk/javap"
 	"github.com/quasilyte/go-jdk/jit"
@@ -95,7 +96,7 @@ func (cmd *javapCommand) printFile(filename string) error {
 			if inst.Flags.IsBlockLead() {
 				blockIndex++
 			}
-			fmt.Printf("        b%d %3d: %s\n", blockIndex, i, inst)
+			fmt.Printf("        b%d %3d: %s\n", blockIndex, i, irfmt.Sprint(&vm.State, inst))
 		}
 		code := m.Out.Code
 		var codeChunks []string
