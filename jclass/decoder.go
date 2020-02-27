@@ -395,15 +395,64 @@ func (d *Decoder) readStackMapFrames() ([]StackMapFrame, error) {
 			offset += uint32(tag)
 		case tag <= 127: // 64-127 same_locals_1_stack_item_frame
 			offset += uint32(tag - 64)
+			if err := d.skipVerificationTypes(1); err != nil {
+				return nil, fmt.Errorf("same_locals_1_stack_item_frame: %v", err)
+			}
 			depth = 1
-			err = d.skipVerificationTypes(1)
+		case tag == 247: // same_locals_1_stack_item_frame_extended
+			delta, err := d.readUint16()
+			if err != nil {
+				return nil, fmt.Errorf("same_locals_1_stack_item_frame_extended: %v", err)
+			}
+			offset += uint32(delta)
+			depth = 1
+		case tag >= 248 && tag <= 250: // 248-250 chop_frame
+			delta, err := d.readUint16()
+			if err != nil {
+				return nil, fmt.Errorf("chop_frame: %v", err)
+			}
+			offset += uint32(delta)
+		case tag == 251: // same_frame_extended
+			delta, err := d.readUint16()
+			if err != nil {
+				return nil, fmt.Errorf("same_frame_extended: %v", err)
+			}
+			offset += uint32(delta)
+		case tag >= 252 && tag <= 254: // 252-254 append_frame
+			delta, err := d.readUint16()
+			if err != nil {
+				return nil, fmt.Errorf("append_frame: %v", err)
+			}
+			offset += uint32(delta)
+			localsNum := int(tag - 251)
+			if err := d.skipVerificationTypes(localsNum); err != nil {
+				return nil, fmt.Errorf("append_frame: %v", err)
+			}
+		case tag == 255: // full_frame
+			delta, err := d.readUint16()
+			if err != nil {
+				return nil, fmt.Errorf("full_frame: %v", err)
+			}
+			offset += uint32(delta)
+			localsNum, err := d.readUint16()
+			if err != nil {
+				return nil, fmt.Errorf("full_frame: %v", err)
+			}
+			if err := d.skipVerificationTypes(int(localsNum)); err != nil {
+				return nil, fmt.Errorf("full_frame: %v", err)
+			}
+			stackDepth, err := d.readUint16()
+			if err != nil {
+				return nil, fmt.Errorf("full_frame: %v", err)
+			}
+			if err := d.skipVerificationTypes(int(stackDepth)); err != nil {
+				return nil, fmt.Errorf("full_frame: %v", err)
+			}
+			depth = stackDepth
 		default:
 			return nil, fmt.Errorf("unexpected tag: %d", tag)
 		}
 
-		if err != nil {
-			return nil, fmt.Errorf("frame%d: %v", i, err)
-		}
 		if i != 0 {
 			offset++
 		}
