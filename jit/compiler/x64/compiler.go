@@ -1,6 +1,7 @@
 package x64
 
 import (
+	"encoding/binary"
 	"fmt"
 	"unsafe"
 
@@ -57,8 +58,8 @@ func (cl *Compiler) link() {
 	for _, rel := range cl.relocs {
 		dstMethod := cl.getMethodByID(rel.targetID)
 		srcMethod := cl.getMethodByID(rel.sourceID)
-		dst := (*int64)(unsafe.Pointer(&dstMethod.Code[rel.targetOffset]))
-		*dst = int64(uintptr(unsafe.Pointer(&srcMethod.Code[0])))
+		addr := uint64(uintptr(unsafe.Pointer(&srcMethod.Code[0])))
+		binary.LittleEndian.PutUint64(dstMethod.Code[rel.targetOffset:], addr)
 	}
 }
 
