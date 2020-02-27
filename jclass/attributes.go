@@ -17,7 +17,12 @@ type (
 		ExceptionTable []ExceptionHandler
 		Attrs          []Attribute
 	}
+
+	StackMapTableAttribute struct {
+		Frames []StackMapFrame
+	}
 )
 
-func (RawAttribute) attribute()  {}
-func (CodeAttribute) attribute() {}
+func (RawAttribute) attribute()           {}
+func (CodeAttribute) attribute()          {}
+func (StackMapTableAttribute) attribute() {}

@@ -37,3 +37,8 @@ type ExceptionHandler struct {
 	HandlerPC uint16
 	CatchType uint16
 }
+
+type StackMapFrame struct {
+	Offset     uint32
+	StackDepth uint16
+}
