@@ -84,16 +84,28 @@ func (g *generator) irArg(n int) ir.Arg {
 
 func (g *generator) generate(dst *ir.Method) error {
 	var code []byte
+	var frames []jclass.StackMapFrame
 	for _, attr := range g.m.Attrs {
-		if attr, ok := attr.(jclass.CodeAttribute); ok {
-			code = attr.Code
-			g.tmpOffset = int64(attr.MaxLocals)
+		attr, ok := attr.(jclass.CodeAttribute)
+		if !ok {
+			continue
+		}
+		code = attr.Code
+		g.tmpOffset = int64(attr.MaxLocals)
+		for _, attr := range attr.Attrs {
+			attr, ok := attr.(jclass.StackMapTableAttribute)
+			if !ok {
+				continue
+			}
+			frames = attr.Frames
 			break
 		}
+		break
 	}
 
 	pc2index := make(map[int32]int32, len(code)/2)
 
+	var prevOp bytecode.Op
 	pc := 0
 	for pc < len(code) {
 		pc2index[int32(pc)] = int32(len(g.out))
@@ -153,18 +165,13 @@ func (g *generator) generate(dst *ir.Method) error {
 			}
 
 		case bytecode.Iload:
-			g.st.push(valueIntLocal, int64(code[pc+1]))
+			g.convertLoad(pc, frames, prevOp, int64(code[pc+1]), ir.InstIload)
 		case bytecode.Lload:
-			g.st.push(valueLongLocal, int64(code[pc+1]))
-
+			g.convertLoad(pc, frames, prevOp, int64(code[pc+1]), ir.InstLload)
 		case bytecode.Iload0, bytecode.Iload1, bytecode.Iload2, bytecode.Iload3:
-			g.st.push(valueIntLocal, int64(op-bytecode.Iload0))
+			g.convertLoad(pc, frames, prevOp, int64(op-bytecode.Iload0), ir.InstIload)
 		case bytecode.Lload0, bytecode.Lload1, bytecode.Lload2, bytecode.Lload3:
-			g.st.push(valueLongLocal, int64(op-bytecode.Lload0))
-		case bytecode.Fload0, bytecode.Fload1, bytecode.Fload2, bytecode.Fload3:
-			g.st.push(valueFloatLocal, int64(op-bytecode.Fload0))
-		case bytecode.Dload0, bytecode.Dload1, bytecode.Dload2, bytecode.Dload3:
-			g.st.push(valueDoubleLocal, int64(op-bytecode.Dload0))
+			g.convertLoad(pc, frames, prevOp, int64(op-bytecode.Lload0), ir.InstLload)
 
 		case bytecode.Istore:
 			g.convertStore(int64(code[pc+1]), ir.InstIload)
@@ -233,6 +240,9 @@ func (g *generator) generate(dst *ir.Method) error {
 		case bytecode.Ificmpge:
 			g.convertCmp(ir.InstIcmp)
 			g.convertCondJump(code, pc, ir.InstJumpGtEq)
+		case bytecode.Ificmpgt:
+			g.convertCmp(ir.InstIcmp)
+			g.convertCondJump(code, pc, ir.InstJumpGt)
 
 		case bytecode.Goto:
 			ib1 := int16(code[pc+1])
@@ -298,6 +308,7 @@ func (g *generator) generate(dst *ir.Method) error {
 		}
 
 		pc += int(bytecode.OpWidth[op])
+		prevOp = op
 	}
 
 	for _, u := range g.toResolve {
@@ -354,6 +365,27 @@ func (g *generator) convertCondJump(code []byte, pc int, kind ir.InstKind) {
 		panic(fmt.Sprintf("%s arg is not flags", kind))
 	}
 	g.drop(1)
+}
+
+func (g *generator) convertLoad(pc int, frames []jclass.StackMapFrame, prevOp bytecode.Op, index int64, kind ir.InstKind) {
+	if isUnconditionalBranch(prevOp) {
+		frame := findFrame(pc, frames)
+		if frame == nil {
+			panic(fmt.Sprintf("no frame for pc=%d", pc))
+		}
+		diff := len(g.st.values) - int(frame.StackDepth)
+		g.drop(diff)
+		tmp := g.nextTmp()
+		dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
+		g.out = append(g.out, ir.Inst{
+			Dst:  dst,
+			Kind: kind,
+			Args: []ir.Arg{{Kind: ir.ArgReg, Value: index}},
+		})
+		g.st.push(valueTmp, tmp)
+	} else {
+		g.st.push(valueIntLocal, index)
+	}
 }
 
 func (g *generator) convertStore(index int64, kind ir.InstKind) {

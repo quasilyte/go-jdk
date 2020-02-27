@@ -44,9 +44,12 @@ const (
 	jmp32op = 0xE9
 	jge8op  = 0x7D
 	jge32op = 0x8D
+	jgt8op  = 0x7F
+	jgt32op = 0x8F
 )
 
 var jumpRel8ToRel32 = [256]byte{
 	jmp8op: jmp32op,
 	jge8op: jge32op,
+	jgt8op: jgt32op,
 }

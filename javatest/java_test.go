@@ -26,6 +26,7 @@ var tests = []*testParams{
 	{Pkg: "arith1", Input: 100},
 	{Pkg: "gocall1", Input: -100},
 	{Pkg: "staticcall1"},
+	{Pkg: "staticcall2"},
 	{Pkg: "loops1"},
 }
 

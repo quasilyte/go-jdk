@@ -388,6 +388,47 @@ func TestAsm(t *testing.T) {
 				asm.SublMemReg(RBX, RDX, 640)
 			},
 		},
+
+		{
+			name: "testJgt1",
+			want: []expected{
+				{180, "JGT forward2", "7f00"},
+				{182, "JGT forward1", "7f01"},
+				{183, "NOP1", "90"},
+				{185, "NOP1", "90"},
+			},
+			run: func(asm *Assembler) {
+				asm.Jgt(2)
+				asm.Label(2)
+				asm.Jgt(1)
+				asm.Nop(1)
+				asm.Label(1)
+				asm.Nop(1)
+			},
+		},
+
+		{
+			name: "testJgt2",
+			want: []expected{
+				{190, "NOP1", "90"},
+				{191, "JGT l1", "7f03"},
+				{193, "NOP1", "90"},
+				{194, "JGT l2", "7ffa"},
+				{196, "NOP1", "90"},
+				{197, "JGT l3", "7ffa"},
+			},
+			run: func(asm *Assembler) {
+				asm.Label(2)
+				asm.Nop(1)
+				asm.Jgt(1)
+				asm.Label(3)
+				asm.Nop(1)
+				asm.Jgt(2)
+				asm.Label(1)
+				asm.Nop(1)
+				asm.Jgt(3)
+			},
+		},
 	}
 
 	for _, test := range tests {
