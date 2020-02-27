@@ -60,14 +60,14 @@ func (p *printer) printMethod(m jclass.Method) {
 		op := bytecode.Op(code[pc])
 		width := int(bytecode.OpWidth[op])
 		opbytes := code[pc : pc+width]
-		fmt.Printf("      %3x %-18s %x\n", pc, op.String(), opbytes)
+		fmt.Printf("      %3d %-18s %x\n", pc, op.String(), opbytes)
 		pc += width
 	}
 	frameTab, ok := findAttr(p.c, codeAttr.Attrs, "StackMapTable").(jclass.StackMapTableAttribute)
 	if ok && len(frameTab.Frames) != 0 {
 		fmt.Println("      ---- (stack map) ----")
 		for _, frame := range frameTab.Frames {
-			fmt.Printf("      %3x depth=%d\n", frame.Offset, frame.StackDepth)
+			fmt.Printf("      %3d depth=%d\n", frame.Offset, frame.StackDepth)
 		}
 	}
 
