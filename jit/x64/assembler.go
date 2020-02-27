@@ -54,6 +54,10 @@ func (a *Assembler) Jge(labelID int64) {
 	a.pushJcc(jge8op, labelID)
 }
 
+func (a *Assembler) Jgt(labelID int64) {
+	a.pushJcc(jgt8op, labelID)
+}
+
 func (a *Assembler) Nop(length int) {
 	// TODO(quasilyte): use wide NOPs.
 	for i := 0; i < length; i++ {

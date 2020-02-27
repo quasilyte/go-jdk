@@ -3,6 +3,7 @@ package irgen
 import (
 	"strings"
 
+	"github.com/quasilyte/go-jdk/bytecode"
 	"github.com/quasilyte/go-jdk/ir"
 	"github.com/quasilyte/go-jdk/jclass"
 )
@@ -10,11 +11,15 @@ import (
 // isJump reports whether inst is a jump instruction.
 func isJump(inst ir.Inst) bool {
 	switch inst.Kind {
-	case ir.InstJump, ir.InstJumpEqual, ir.InstJumpNotEqual, ir.InstJumpGtEq:
+	case ir.InstJump, ir.InstJumpEqual, ir.InstJumpNotEqual, ir.InstJumpGtEq, ir.InstJumpGt:
 		return true
 	default:
 		return false
 	}
+}
+
+func isUnconditionalBranch(op bytecode.Op) bool {
+	return op == bytecode.Goto
 }
 
 func argsCount(d string) int {
@@ -31,4 +36,13 @@ func splitName(full string) (name, pkg string) {
 		return full, ""
 	}
 	return full[delim+1:], full[:delim]
+}
+
+func findFrame(offset int, frames []jclass.StackMapFrame) *jclass.StackMapFrame {
+	for i, frame := range frames {
+		if int(frame.Offset) == offset {
+			return &frames[i]
+		}
+	}
+	return nil
 }

@@ -134,6 +134,8 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 	switch inst.Kind {
 	case ir.InstJumpGtEq:
 		asm.Jge(a1.Value)
+	case ir.InstJumpGt:
+		asm.Jgt(a1.Value)
 	case ir.InstJump:
 		asm.Jmp(a1.Value)
 

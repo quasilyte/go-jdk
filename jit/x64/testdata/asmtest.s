@@ -175,3 +175,24 @@ TEXT testSub(SB), 0, $0-0
         SUBL 16(SI), AX // asm.SublMemReg(RSI, RAX, 16)
         SUBL 640(BX), DX // asm.SublMemReg(RBX, RDX, 640)
         RET
+
+TEXT testJgt1(SB), 0, $0-0
+        JGT forward2 // asm.Jgt(2)
+forward2:
+        JGT forward1 // asm.Label(2); asm.Jgt(1)
+        NOP1         // asm.Nop(1)
+forward1:
+        NOP1 // asm.Label(1); asm.Nop(1)
+        RET
+
+TEXT testJgt2(SB), 0, $0-0
+l2:
+        NOP1   // asm.Label(2); asm.Nop(1)
+        JGT l1 // asm.Jgt(1)
+l3:
+        NOP1   // asm.Label(3); asm.Nop(1)
+        JGT l2 // asm.Jgt(2)
+l1:
+        NOP1   // asm.Label(1); asm.Nop(1)
+        JGT l3 // asm.Jgt(3)
+        RET
