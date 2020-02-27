@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/quasilyte/go-jdk/ir"
+	"github.com/quasilyte/go-jdk/irfmt"
 	"github.com/quasilyte/go-jdk/loader"
 	"github.com/quasilyte/go-jdk/vmdat"
 )
@@ -152,9 +153,9 @@ func sprintMethod(st *vmdat.State, m *ir.Method) string {
 		}
 		if inst.Flags.IsJumpTarget() && i != 0 {
 			fmt.Fprintf(&buf, "%s:\n", index2label[i])
-			fmt.Fprintf(&buf, "  b%d %s\n", blockIndex, inst)
+			fmt.Fprintf(&buf, "  b%d %s\n", blockIndex, irfmt.Sprint(st, inst))
 		} else {
-			line := fmt.Sprintf("  b%d %s\n", blockIndex, inst)
+			line := fmt.Sprintf("  b%d %s\n", blockIndex, irfmt.Sprint(st, inst))
 			m := branchArgRE.FindStringSubmatch(line)
 			if m != nil {
 				index, err := strconv.Atoi(m[1])
