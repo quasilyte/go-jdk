@@ -234,7 +234,8 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		offset := 0
 		i := 1
 		failed := false
-		jclass.MethodDescriptor(method.Descriptor).WalkParams(func(typ jclass.DescriptorType) {
+		signature := jclass.MethodDescriptor(method.Descriptor)
+		signature.WalkParams(func(typ jclass.DescriptorType) {
 			arg := inst.Args[i]
 			switch typ.Kind {
 			case 'I':
@@ -278,6 +279,19 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		asm.JmpReg(x64.RDI)
 		asm.MovqMemReg(x64.RBP, x64.RDX, envOffset)  // Load DX
 		asm.MovqMemReg(x64.RDX, x64.RSI, tmp0offset) // Load SI
+		if dst.Kind != 0 {
+			// Return values start from a location aligned to a pointer size.
+			if rem := offset % 8; rem != 0 {
+				offset += rem
+			}
+			switch signature.ReturnType().Kind {
+			case 'I':
+				asm.MovlMemReg(x64.RBP, x64.RAX, int32(arg0offset+offset))
+				asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
+			default:
+				return false
+			}
+		}
 
 	case ir.InstCallStatic:
 		frameSize := cl.method.Out.FrameSlots*8 + 8

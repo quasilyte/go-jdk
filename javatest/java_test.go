@@ -24,6 +24,7 @@ var tests = []*testParams{
 	{Pkg: "longvalues", Input: 400},
 	{Pkg: "scopes"},
 	{Pkg: "arith1", Input: 100},
+	{Pkg: "gocall1", Input: -100},
 	{Pkg: "staticcall1"},
 	{Pkg: "loops1"},
 }
@@ -135,6 +136,8 @@ func runTest(t *testing.T, params *testParams) {
 
 	vm.State.BindGoFunc("testutil/T.printInt", golibPrintInt)
 	vm.State.BindGoFunc("testutil/T.printLong", golibPrintLong)
+	vm.State.BindGoFunc("testutil/T.isub", golibIsub)
+	vm.State.BindGoFunc("testutil/T.isub3", golibIsub3)
 
 	pkg, err := loadAndCompilePackage(vm, params.Pkg)
 	if err != nil {
