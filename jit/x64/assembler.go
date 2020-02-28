@@ -469,6 +469,17 @@ func (a *Assembler) AddqConst32Mem(v int32, reg uint8, disp int32) {
 	})
 }
 
+func (a *Assembler) MovlqsxRegMem(srcreg, dstreg uint8, disp int32) {
+	a.push(instruction{
+		prefix: rexW,
+		opcode: 0x63,
+		reg1:   dstreg,
+		reg2:   srcreg,
+		flags:  flagModRM | flagMemory,
+		disp:   disp,
+	})
+}
+
 func (a *Assembler) link() {
 	// TODO: don't use a map here.
 	id2index := make(map[int]int, len(a.labels))

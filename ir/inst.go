@@ -62,4 +62,5 @@ const (
 	InstConvL2I
 	InstConvF2I
 	InstConvD2I
+	InstConvI2L
 )
