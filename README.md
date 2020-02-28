@@ -2,7 +2,9 @@
 
 ![Logo](docs/logo_small.png)
 
-`go-jdk` is an embeddable JVM for Go.
+[`go-jdk`](https://github.com/quasilyte/go-jdk) is [`OpenJDK`](https://ru.wikipedia.org/wiki/OpenJDK)-like implementation
+written in Go with a goal to deliver a great embeddable [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine) for
+[Go](http://golang.org/) applications without [CGo](https://golang.org/cmd/cgo/).
 
 Key features:
 
