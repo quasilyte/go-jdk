@@ -204,6 +204,6 @@ TEXT testImul(SB), 0, $0-0
         RET
 
 TEXT testMovlqsx(SB), 0, $0-0
-				MOVLQSX 4(AX), BX // asm.MovlqsxMemReg(RAX, RBX, 4)
-				MOVLQSX 8(AX), AX // asm.MovlqsxMemReg(RAX, RAX, 8)
-				RET
+        MOVLQSX 4(AX), BX // asm.MovlqsxMemReg(RAX, RBX, 4)
+        MOVLQSX 8(AX), AX // asm.MovlqsxMemReg(RAX, RAX, 8)
+        RET
