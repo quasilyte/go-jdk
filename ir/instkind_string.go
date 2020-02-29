@@ -34,11 +34,12 @@ func _() {
 	_ = x[InstConvL2I-23]
 	_ = x[InstConvF2I-24]
 	_ = x[InstConvD2I-25]
+	_ = x[InstConvI2L-26]
 }
 
-const _InstKind_name = "InvalidIloadLloadRetIretLretCallStaticCallGoIcmpLcmpJumpJumpEqualJumpNotEqualJumpGtEqJumpGtImulIaddLaddFaddIsubInegLnegDaddConvL2IConvF2IConvD2I"
+const _InstKind_name = "InvalidIloadLloadRetIretLretCallStaticCallGoIcmpLcmpJumpJumpEqualJumpNotEqualJumpGtEqJumpGtImulIaddLaddFaddIsubInegLnegDaddConvL2IConvF2IConvD2IConvI2L"
 
-var _InstKind_index = [...]uint8{0, 7, 12, 17, 20, 24, 28, 38, 44, 48, 52, 56, 65, 77, 85, 91, 95, 99, 103, 107, 111, 115, 119, 123, 130, 137, 144}
+var _InstKind_index = [...]uint8{0, 7, 12, 17, 20, 24, 28, 38, 44, 48, 52, 56, 65, 77, 85, 91, 95, 99, 103, 107, 111, 115, 119, 123, 130, 137, 144, 151}
 
 func (i InstKind) String() string {
 	if i < 0 || i >= InstKind(len(_InstKind_index)-1) {

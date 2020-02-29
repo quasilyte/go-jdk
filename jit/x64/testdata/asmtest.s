@@ -202,3 +202,8 @@ TEXT testImul(SB), 0, $0-0
         IMULL 4(SI), CX // asm.ImullMemReg(RSI, RCX, 4)
         IMULL -8(DX), AX // asm.ImullMemReg(RDX, RAX, -8)
         RET
+
+TEXT testMovlqsx(SB), 0, $0-0
+        MOVLQSX 4(AX), BX // asm.MovlqsxMemReg(RAX, RBX, 4)
+        MOVLQSX 8(AX), AX // asm.MovlqsxMemReg(RAX, RAX, 8)
+        RET

@@ -21,7 +21,7 @@ var testsDebug = os.Getenv("DEBUG") == "true"
 
 var tests = []*testParams{
 	{Pkg: "intvalues", Input: 400},
-	{Pkg: "longvalues", Input: 400},
+	{Pkg: "longvalues", Input: -400},
 	{Pkg: "scopes"},
 	{Pkg: "arith1", Input: 100},
 	{Pkg: "gocall1", Input: -100},

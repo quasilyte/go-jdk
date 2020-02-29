@@ -219,7 +219,8 @@ func (g *generator) generate(dst *ir.Method) error {
 			g.convertUnaryOp(ir.InstConvF2I)
 		case bytecode.D2i:
 			g.convertUnaryOp(ir.InstConvD2I)
-
+		case bytecode.I2l:
+			g.convertUnaryOp(ir.InstConvI2L)
 		case bytecode.Lcmp:
 			g.convertCmp(ir.InstLcmp)
 

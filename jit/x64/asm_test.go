@@ -19,7 +19,6 @@ func TestAsm(t *testing.T) {
 		want []expected
 		run  func(*Assembler)
 	}{
-
 		{
 			name: "testJge1",
 			want: []expected{
@@ -190,7 +189,6 @@ func TestAsm(t *testing.T) {
 				asm.JmpMem(RCX, 13935)
 			},
 		},
-
 		{
 			name: "testAdd",
 			want: []expected{
@@ -441,6 +439,18 @@ func TestAsm(t *testing.T) {
 				asm.ImullMemReg(RAX, RCX, 0)
 				asm.ImullMemReg(RSI, RCX, 4)
 				asm.ImullMemReg(RDX, RAX, -8)
+			},
+		},
+
+		{
+			name: "testMovlqsx",
+			want: []expected{
+				{207, "MOVLQSX 4(AX), BX", "48635804"},
+				{208, "MOVLQSX 8(AX), AX", "48634008"},
+			},
+			run: func(asm *Assembler) {
+				asm.MovlqsxMemReg(RAX, RBX, 4)
+				asm.MovlqsxMemReg(RAX, RAX, 8)
 			},
 		},
 	}
