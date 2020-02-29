@@ -4,8 +4,7 @@ import testutil.T;
 
 public class Test {
     public static void run(int x) {
-        // TODO: needs i2l instruction support.
-        // T.printLong(x);
+        T.printLong(x);
 
         T.printLong(0);
         T.printLong(100);

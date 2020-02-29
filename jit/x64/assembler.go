@@ -469,7 +469,7 @@ func (a *Assembler) AddqConst32Mem(v int32, reg uint8, disp int32) {
 	})
 }
 
-func (a *Assembler) MovlqsxRegMem(srcreg, dstreg uint8, disp int32) {
+func (a *Assembler) MovlqsxMemReg(srcreg, dstreg uint8, disp int32) {
 	a.push(instruction{
 		prefix: rexW,
 		opcode: 0x63,

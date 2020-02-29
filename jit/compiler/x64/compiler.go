@@ -416,8 +416,8 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 			return false
 		}
 	case ir.InstConvI2L:
-		asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
-		asm.MovlqsxRegMem(x64.RAX, x64.RSI, regDisp(dst))
+		asm.MovlqsxMemReg(x64.RSI, x64.RAX, regDisp(a1))
+		asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(dst))
 		return true
 	default:
 		return false
