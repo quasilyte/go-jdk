@@ -14,7 +14,7 @@
 // AX - tmp register; also used for return value
 // BX - <unused> (pin to "this" pointer?)
 // CX - <unused>
-// DX - <unused>
+// DX - <unused> (note: affected by IDIV instruction)
 // SI - stack pointer
 // DI - env pointer (no need to spill, always in an argument slot)
 //
