@@ -53,6 +53,7 @@ const (
 	InstJumpGt
 	InstJumpLt
 	InstImul
+	InstIdiv
 	InstIadd
 	InstLadd
 	InstFadd

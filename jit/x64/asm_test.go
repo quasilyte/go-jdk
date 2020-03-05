@@ -496,6 +496,28 @@ func TestAsm(t *testing.T) {
 				asm.Jlt(3)
 			},
 		},
+
+		{
+			name: "testCdq",
+			want: []expected{
+				{233, "CDQ", "99"},
+			},
+			run: func(asm *Assembler) {
+				asm.Cdq()
+			},
+		},
+
+		{
+			name: "testIdivl",
+			want: []expected{
+				{237, "IDIVL (AX)", "f738"},
+				{238, "IDIVL 16(CX)", "f77910"},
+			},
+			run: func(asm *Assembler) {
+				asm.IdivlMem(RAX, 0)
+				asm.IdivlMem(RCX, 16)
+			},
+		},
 	}
 
 	for _, test := range tests {

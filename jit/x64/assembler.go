@@ -69,6 +69,10 @@ func (a *Assembler) Nop(length int) {
 	}
 }
 
+func (a *Assembler) Cdq() {
+	a.push(instruction{opcode: 0x99})
+}
+
 func (a *Assembler) CallReg(reg uint8) {
 	a.push(instruction{
 		opcode: 0xff,
@@ -336,6 +340,16 @@ func (a *Assembler) SublMemReg(srcreg, dstreg uint8, disp int32) {
 		opcode: 0x2b,
 		reg1:   dstreg,
 		reg2:   srcreg,
+		flags:  flagModRM | flagMemory,
+		disp:   disp,
+	})
+}
+
+func (a *Assembler) IdivlMem(reg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0xF7,
+		reg1:   op7,
+		reg2:   reg,
 		flags:  flagModRM | flagMemory,
 		disp:   disp,
 	})

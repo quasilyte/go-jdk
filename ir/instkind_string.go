@@ -25,22 +25,23 @@ func _() {
 	_ = x[InstJumpGt-14]
 	_ = x[InstJumpLt-15]
 	_ = x[InstImul-16]
-	_ = x[InstIadd-17]
-	_ = x[InstLadd-18]
-	_ = x[InstFadd-19]
-	_ = x[InstIsub-20]
-	_ = x[InstIneg-21]
-	_ = x[InstLneg-22]
-	_ = x[InstDadd-23]
-	_ = x[InstConvL2I-24]
-	_ = x[InstConvF2I-25]
-	_ = x[InstConvD2I-26]
-	_ = x[InstConvI2L-27]
+	_ = x[InstIdiv-17]
+	_ = x[InstIadd-18]
+	_ = x[InstLadd-19]
+	_ = x[InstFadd-20]
+	_ = x[InstIsub-21]
+	_ = x[InstIneg-22]
+	_ = x[InstLneg-23]
+	_ = x[InstDadd-24]
+	_ = x[InstConvL2I-25]
+	_ = x[InstConvF2I-26]
+	_ = x[InstConvD2I-27]
+	_ = x[InstConvI2L-28]
 }
 
-const _InstKind_name = "InvalidIloadLloadRetIretLretCallStaticCallGoIcmpLcmpJumpJumpEqualJumpNotEqualJumpGtEqJumpGtJumpLtImulIaddLaddFaddIsubInegLnegDaddConvL2IConvF2IConvD2IConvI2L"
+const _InstKind_name = "InvalidIloadLloadRetIretLretCallStaticCallGoIcmpLcmpJumpJumpEqualJumpNotEqualJumpGtEqJumpGtJumpLtImulIdivIaddLaddFaddIsubInegLnegDaddConvL2IConvF2IConvD2IConvI2L"
 
-var _InstKind_index = [...]uint8{0, 7, 12, 17, 20, 24, 28, 38, 44, 48, 52, 56, 65, 77, 85, 91, 97, 101, 105, 109, 113, 117, 121, 125, 129, 136, 143, 150, 157}
+var _InstKind_index = [...]uint8{0, 7, 12, 17, 20, 24, 28, 38, 44, 48, 52, 56, 65, 77, 85, 91, 97, 101, 105, 109, 113, 117, 121, 125, 129, 133, 140, 147, 154, 161}
 
 func (i InstKind) String() string {
 	if i < 0 || i >= InstKind(len(_InstKind_index)-1) {

@@ -228,3 +228,12 @@ l1:
         NOP1   // asm.Label(1); asm.Nop(1)
         JLT l3 // asm.Jlt(3)
         RET
+
+TEXT testCdq(SB), 0, $0-0
+        CDQ // asm.Cdq()
+        RET
+
+TEXT testIdivl(SB), 0, $0-0
+        IDIVL (AX) // asm.IdivlMem(RAX, 0)
+        IDIVL 16(CX) // asm.IdivlMem(RCX, 16)
+        RET

@@ -194,6 +194,8 @@ func (g *generator) generate(dst *ir.Method) error {
 			g.convertBinOp(ir.InstIsub)
 		case bytecode.Imul:
 			g.convertBinOp(ir.InstImul)
+		case bytecode.Idiv:
+			g.convertBinOp(ir.InstIdiv)
 
 		case bytecode.Ineg:
 			g.convertUnaryOp(ir.InstIneg)

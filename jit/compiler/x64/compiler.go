@@ -283,14 +283,14 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		if failed {
 			return false
 		}
-		asm.MovqRegMem(x64.RSI, x64.RDX, tmp0offset) // Spill SI
+		asm.MovqRegMem(x64.RSI, x64.RDI, tmp0offset) // Spill SI
 		asm.MovlConstReg(int64(fnAddr), x64.RCX)
 		asm.MovlConstReg(int64(cl.ctx.JcallAddr+gocallOffset), x64.RDI)
 		asm.Raw(0x48, 0x8d, 0x05, 4+2, 0, 0, 0)
 		asm.MovqRegMem(x64.RAX, x64.RBP, -8)
 		asm.JmpReg(x64.RDI)
-		asm.MovqMemReg(x64.RBP, x64.RDX, envOffset)  // Load DX
-		asm.MovqMemReg(x64.RDX, x64.RSI, tmp0offset) // Load SI
+		asm.MovqMemReg(x64.RBP, x64.RDI, envOffset)  // Load DI
+		asm.MovqMemReg(x64.RDI, x64.RSI, tmp0offset) // Load SI
 		if dst.Kind != 0 {
 			// Return values start from a location aligned to a pointer size.
 			if rem := offset % 8; rem != 0 {
@@ -413,6 +413,16 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		case a2.Kind == ir.ArgReg:
 			asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
 			asm.ImullMemReg(x64.RSI, x64.RAX, regDisp(a2))
+			asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
+		default:
+			return false
+		}
+	case ir.InstIdiv:
+		switch {
+		case a2.Kind == ir.ArgReg && a1.Kind == ir.ArgReg:
+			asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
+			asm.Cdq()
+			asm.IdivlMem(x64.RSI, regDisp(a2))
 			asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
 		default:
 			return false

@@ -22,5 +22,13 @@ public class Test {
         T.printInt(b-a);
         T.printInt(a+b);
         T.printInt(b+a);
+
+        int y = 1000;
+        T.printInt(a/b);
+        T.printInt(b/a);
+        T.printInt(y/a/b);
+
+        T.printInt(a*b);
+        T.printInt(b*a*y);
     }
 }

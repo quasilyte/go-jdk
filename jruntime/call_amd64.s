@@ -14,9 +14,9 @@
 // AX - tmp register; also used for return value
 // BX - <unused> (pin to "this" pointer?)
 // CX - <unused>
-// DX - env pointer (no need to spill, always in an argument slot)
+// DX - <unused>
 // SI - stack pointer
-// DI - <unused>
+// DI - env pointer (no need to spill, always in an argument slot)
 //
 // $96 bytes for Go call arguments space.
 // $16 bytes for 2 pointer arguments.
@@ -27,8 +27,8 @@ TEXT ·jcall(SB), 0, $96-16
         // reachable from other parts of the program, we should be fine.
         // See #32.
         NO_LOCAL_POINTERS
-        MOVQ e+0(FP), DX // env is always at DX
-        MOVQ 1*8(DX), SI // stack is always at SI
+        MOVQ e+0(FP), DI // env is always at DI
+        MOVQ 1*8(DI), SI // stack is always at SI
         MOVQ code+8(FP), CX
         JCALL(CX)
         MOVQ AX, -8(SI) // Save called function result, if any
