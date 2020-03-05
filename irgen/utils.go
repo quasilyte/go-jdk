@@ -11,7 +11,7 @@ import (
 // isJump reports whether inst is a jump instruction.
 func isJump(inst ir.Inst) bool {
 	switch inst.Kind {
-	case ir.InstJump, ir.InstJumpEqual, ir.InstJumpNotEqual, ir.InstJumpGtEq, ir.InstJumpGt:
+	case ir.InstJump, ir.InstJumpEqual, ir.InstJumpNotEqual, ir.InstJumpGtEq, ir.InstJumpGt, ir.InstJumpLt:
 		return true
 	default:
 		return false

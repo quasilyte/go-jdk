@@ -19,6 +19,7 @@ func TestAsm(t *testing.T) {
 		want []expected
 		run  func(*Assembler)
 	}{
+
 		{
 			name: "testJge1",
 			want: []expected{
@@ -189,6 +190,7 @@ func TestAsm(t *testing.T) {
 				asm.JmpMem(RCX, 13935)
 			},
 		},
+
 		{
 			name: "testAdd",
 			want: []expected{
@@ -451,6 +453,47 @@ func TestAsm(t *testing.T) {
 			run: func(asm *Assembler) {
 				asm.MovlqsxMemReg(RAX, RBX, 4)
 				asm.MovlqsxMemReg(RAX, RAX, 8)
+			},
+		},
+
+		{
+			name: "testJlt1",
+			want: []expected{
+				{212, "JLT forward2", "7c00"},
+				{214, "JLT forward1", "7c01"},
+				{215, "NOP1", "90"},
+				{217, "NOP1", "90"},
+			},
+			run: func(asm *Assembler) {
+				asm.Jlt(2)
+				asm.Label(2)
+				asm.Jlt(1)
+				asm.Nop(1)
+				asm.Label(1)
+				asm.Nop(1)
+			},
+		},
+
+		{
+			name: "testJlt2",
+			want: []expected{
+				{222, "NOP1", "90"},
+				{223, "JLT l1", "7c03"},
+				{225, "NOP1", "90"},
+				{226, "JLT l2", "7cfa"},
+				{228, "NOP1", "90"},
+				{229, "JLT l3", "7cfa"},
+			},
+			run: func(asm *Assembler) {
+				asm.Label(2)
+				asm.Nop(1)
+				asm.Jlt(1)
+				asm.Label(3)
+				asm.Nop(1)
+				asm.Jlt(2)
+				asm.Label(1)
+				asm.Nop(1)
+				asm.Jlt(3)
 			},
 		},
 	}

@@ -17,6 +17,15 @@ public class Test {
         T.printInt(factorial(4));
         T.printInt(factorial(5));
         T.printInt(factorial(6));
+
+        T.printInt(sqrt(0));
+        T.printInt(sqrt(3));
+        T.printInt(sqrt(4));
+        T.printInt(sqrt(9));
+        T.printInt(sqrt(36));
+        T.printInt(sqrt(96));
+        T.printInt(sqrt(100));
+        T.printInt(sqrt(256));
     }
 
     public static int fib(int n) {
@@ -31,5 +40,15 @@ public class Test {
             return 1;
         }
         return n * factorial(n-1);
+    }
+
+    public static int sqrt(int n) {
+        int b = 0;
+        while (n >= 0) {
+            n = n - b;
+            b++;
+            n = n - b;
+        }
+        return b - 1;
     }
 }

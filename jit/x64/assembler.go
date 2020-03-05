@@ -54,6 +54,10 @@ func (a *Assembler) Jge(labelID int64) {
 	a.pushJcc(jge8op, labelID)
 }
 
+func (a *Assembler) Jlt(labelID int64) {
+	a.pushJcc(jlt8op, labelID)
+}
+
 func (a *Assembler) Jgt(labelID int64) {
 	a.pushJcc(jgt8op, labelID)
 }

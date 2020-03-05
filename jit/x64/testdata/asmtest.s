@@ -207,3 +207,24 @@ TEXT testMovlqsx(SB), 0, $0-0
         MOVLQSX 4(AX), BX // asm.MovlqsxMemReg(RAX, RBX, 4)
         MOVLQSX 8(AX), AX // asm.MovlqsxMemReg(RAX, RAX, 8)
         RET
+
+TEXT testJlt1(SB), 0, $0-0
+        JLT forward2 // asm.Jlt(2)
+forward2:
+        JLT forward1 // asm.Label(2); asm.Jlt(1)
+        NOP1         // asm.Nop(1)
+forward1:
+        NOP1 // asm.Label(1); asm.Nop(1)
+        RET
+
+TEXT testJlt2(SB), 0, $0-0
+l2:
+        NOP1   // asm.Label(2); asm.Nop(1)
+        JLT l1 // asm.Jlt(1)
+l3:
+        NOP1   // asm.Label(3); asm.Nop(1)
+        JLT l2 // asm.Jlt(2)
+l1:
+        NOP1   // asm.Label(1); asm.Nop(1)
+        JLT l3 // asm.Jlt(3)
+        RET

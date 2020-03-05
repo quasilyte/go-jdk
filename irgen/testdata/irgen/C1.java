@@ -67,4 +67,29 @@ class C1 {
         }
         return n * factorial(n-1);
     }
+
+    // slots=4
+    //   b0 r1 = Iload 0
+    // label0:
+    //   b1 flags = Icmp r0 0
+    //   b1 JumpLt label1 flags
+    //   b2 r2 = Isub r0 r1
+    //   b2 r0 = Iload r2
+    //   b2 r1 = Iadd r1 1
+    //   b2 r2 = Isub r0 r1
+    //   b2 r0 = Iload r2
+    //   b2 Jump label0
+    // label1:
+    //   b3 r2 = Iload r1
+    //   b3 r3 = Isub r2 1
+    //   b3 Iret r3
+    public static int sqrt(int n) {
+        int b = 0;
+        while (n >= 0) {
+            n = n - b;
+            b++;
+            n = n - b;
+        }
+        return b - 1;
+    }
 }

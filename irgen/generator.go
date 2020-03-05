@@ -224,6 +224,11 @@ func (g *generator) generate(dst *ir.Method) error {
 
 		case bytecode.Lcmp:
 			g.convertCmp(ir.InstLcmp)
+		case bytecode.Iflt:
+			if g.st.top().kind != valueFlags {
+				g.convertCmpZero()
+			}
+			g.convertCondJump(code, pc, ir.InstJumpLt)
 		case bytecode.Ifge:
 			if g.st.top().kind != valueFlags {
 				g.convertCmpZero()
