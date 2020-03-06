@@ -42,6 +42,7 @@ const (
 	InstRet
 	InstIret
 	InstLret
+	InstAret
 	InstCallStatic
 	InstCallGo
 	InstIcmp
@@ -65,4 +66,12 @@ const (
 	InstConvF2I
 	InstConvD2I
 	InstConvI2L
+	InstNewBoolArray
+	InstNewCharArray
+	InstNewFloatArray
+	InstNewDoubleArray
+	InstNewByteArray
+	InstNewShortArray
+	InstNewIntArray
+	InstNewLongArray
 )

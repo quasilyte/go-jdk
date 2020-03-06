@@ -308,10 +308,15 @@ func (g *generator) generate(dst *ir.Method) error {
 			g.convertRet(ir.InstIret)
 		case bytecode.Lreturn:
 			g.convertRet(ir.InstLret)
+		case bytecode.Areturn:
+			g.convertRet(ir.InstAret)
 		case bytecode.Return:
 			g.out = append(g.out, ir.Inst{
 				Kind: ir.InstRet,
 			})
+
+		case bytecode.Newarray:
+			g.convertNewArray(code, pc)
 
 		default:
 			panic(fmt.Sprintf("unhandled op=%[1]d (0x%[1]x)", code[pc]))
@@ -437,6 +442,39 @@ func (g *generator) convertCmp(kind ir.InstKind) {
 	})
 	g.drop(2)
 	g.st.push(valueFlags, 0)
+}
+
+func (g *generator) convertNewArray(code []byte, pc int) {
+	ib := int16(code[pc+1])
+	var kind ir.InstKind
+	switch ib {
+	case 4:
+		kind = ir.InstNewBoolArray
+	case 5:
+		kind = ir.InstNewCharArray
+	case 6:
+		kind = ir.InstNewFloatArray
+	case 7:
+		kind = ir.InstNewDoubleArray
+	case 8:
+		kind = ir.InstNewByteArray
+	case 9:
+		kind = ir.InstNewShortArray
+	case 10:
+		kind = ir.InstNewIntArray
+	case 11:
+		kind = ir.InstNewLongArray
+	}
+
+	tmp := g.nextTmp()
+	dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
+	g.out = append(g.out, ir.Inst{
+		Dst:  dst,
+		Kind: kind,
+		Args: []ir.Arg{g.irArg(0)},
+	})
+	g.drop(1)
+	g.st.push(valueTmp, tmp)
 }
 
 func (g *generator) convertUnaryOp(kind ir.InstKind) {

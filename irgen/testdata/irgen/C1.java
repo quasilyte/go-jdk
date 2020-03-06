@@ -92,4 +92,20 @@ class C1 {
         }
         return b - 1;
     }
+
+    // slots=1
+    //   b0 r0 = NewIntArray 10
+    //   b0 Aret r0
+    public static int[] newIarray() {
+        return new int[10];
+    }
+
+    // slots=2
+    //   b0 r0 = Iload 128
+    //   b0 r1 = NewDoubleArray r0
+    //   b0 Aret r1
+    public static double[] newDarray() {
+        int length = 128;
+        return new double[length];
+    }
 }
