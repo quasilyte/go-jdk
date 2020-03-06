@@ -54,6 +54,7 @@ func NewEnv(vm *VM, cfg *EnvConfig) *Env {
 
 	// TODO(quasilyte): can we find a safe heuristic
 	// for objects count instead of preparing 100% slots?
+	// FIXME: this code implies 64-bit platform.
 	objects := make([]*Object, len(stack)/8)
 	env.objects = &objects[0]
 
@@ -76,6 +77,7 @@ type envFixed struct {
 	// as they are sometimes accessed via computed offsets manually.
 	// Everything that doesn't need to be aligned carefully can go
 	// into Env struct itself instead.
+	// FIXME: this layout implies 64-bit platform.
 
 	allocBytesLeft int64    // offset=0
 	stack          *byte    // offset=8
