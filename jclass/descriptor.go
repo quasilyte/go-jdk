@@ -38,11 +38,6 @@ func walkDescriptor(s string, visit func(typ DescriptorType)) {
 		switch s[i] {
 		case ')':
 			return
-		case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z', 'V':
-			typ.Kind = s[i]
-			visit(typ)
-			i++
-			typ.Dims = 0
 		case 'L':
 			end := strings.IndexByte(s[i:], ';') + i
 			typ.Kind = 'L'
@@ -53,6 +48,13 @@ func walkDescriptor(s string, visit func(typ DescriptorType)) {
 		case '[':
 			typ.Dims++
 			i++
+		default:
+			// Everything else is treated as a single-letter
+			// type descriptor part.
+			typ.Kind = s[i]
+			visit(typ)
+			i++
+			typ.Dims = 0
 		}
 	}
 }
