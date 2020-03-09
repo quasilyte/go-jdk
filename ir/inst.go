@@ -39,6 +39,7 @@ const (
 
 	InstIload
 	InstLload
+	InstAload
 	InstRet
 	InstIret
 	InstLret
@@ -66,6 +67,7 @@ const (
 	InstConvF2I
 	InstConvD2I
 	InstConvI2L
+	InstConvI2B
 	InstNewBoolArray
 	InstNewCharArray
 	InstNewFloatArray
@@ -74,4 +76,7 @@ const (
 	InstNewShortArray
 	InstNewIntArray
 	InstNewLongArray
+	InstIntArraySet
+	InstIntArrayGet
+	InstArrayLen
 )

@@ -172,6 +172,8 @@ func (g *generator) generate(dst *ir.Method) error {
 			g.convertLoad(pc, frames, prevOp, int64(op-bytecode.Iload0), ir.InstIload)
 		case bytecode.Lload0, bytecode.Lload1, bytecode.Lload2, bytecode.Lload3:
 			g.convertLoad(pc, frames, prevOp, int64(op-bytecode.Lload0), ir.InstLload)
+		case bytecode.Aload0, bytecode.Aload1, bytecode.Aload2, bytecode.Aload3:
+			g.convertLoad(pc, frames, prevOp, int64(op-bytecode.Aload0), ir.InstAload)
 
 		case bytecode.Istore:
 			g.convertStore(int64(code[pc+1]), ir.InstIload)
@@ -181,6 +183,44 @@ func (g *generator) generate(dst *ir.Method) error {
 			g.convertStore(int64(op-bytecode.Istore0), ir.InstIload)
 		case bytecode.Lstore0, bytecode.Lstore1, bytecode.Lstore2, bytecode.Lstore3:
 			g.convertStore(int64(op-bytecode.Lstore0), ir.InstLload)
+		case bytecode.Astore0, bytecode.Astore1, bytecode.Astore2, bytecode.Astore3:
+			g.convertStore(int64(op-bytecode.Astore0), ir.InstAload)
+
+		case bytecode.Iastore:
+			g.out = append(g.out, ir.Inst{
+				Kind: ir.InstIntArraySet,
+				Args: []ir.Arg{
+					g.irArg(2), // array ref
+					g.irArg(1), // index
+					g.irArg(0), // value
+				},
+			})
+			g.drop(3)
+
+		case bytecode.Iaload:
+			tmp := g.nextTmp()
+			dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
+			g.out = append(g.out, ir.Inst{
+				Dst:  dst,
+				Kind: ir.InstIntArrayGet,
+				Args: []ir.Arg{
+					g.irArg(1), // array ref
+					g.irArg(0), // index
+				},
+			})
+			g.drop(2)
+			g.st.push(valueTmp, tmp)
+
+		case bytecode.Arraylength:
+			tmp := g.nextTmp()
+			dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
+			g.out = append(g.out, ir.Inst{
+				Dst:  dst,
+				Kind: ir.InstArrayLen,
+				Args: []ir.Arg{g.irArg(0)},
+			})
+			g.drop(1)
+			g.st.push(valueTmp, tmp)
 
 		case bytecode.Iadd:
 			g.convertBinOp(ir.InstIadd)
@@ -223,6 +263,8 @@ func (g *generator) generate(dst *ir.Method) error {
 			g.convertUnaryOp(ir.InstConvD2I)
 		case bytecode.I2l:
 			g.convertUnaryOp(ir.InstConvI2L)
+		case bytecode.I2b:
+			g.convertUnaryOp(ir.InstConvI2B)
 
 		case bytecode.Lcmp:
 			g.convertCmp(ir.InstLcmp)
@@ -471,7 +513,10 @@ func (g *generator) convertNewArray(code []byte, pc int) {
 	g.out = append(g.out, ir.Inst{
 		Dst:  dst,
 		Kind: kind,
-		Args: []ir.Arg{g.irArg(0)},
+		Args: []ir.Arg{
+			{Kind: ir.ArgEnv},
+			g.irArg(0),
+		},
 	})
 	g.drop(1)
 	g.st.push(valueTmp, tmp)

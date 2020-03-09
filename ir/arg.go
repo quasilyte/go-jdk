@@ -22,6 +22,8 @@ func (arg Arg) SymbolID() symbol.ID { return symbol.ID(arg.Value) }
 
 func (arg Arg) String() string {
 	switch arg.Kind {
+	case ArgEnv:
+		return "env"
 	case ArgBranch:
 		return fmt.Sprintf("@%d", arg.Value)
 	case ArgFlags:
@@ -49,6 +51,7 @@ type ArgKind int
 const (
 	ArgInvalid ArgKind = iota
 
+	ArgEnv
 	ArgBranch
 	ArgFlags
 	ArgReg
