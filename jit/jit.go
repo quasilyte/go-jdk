@@ -10,7 +10,10 @@ type Context struct {
 	State *vmdat.State
 	Mmap  *mmap.Manager
 
-	JcallAddr uint32
+	Funcs struct {
+		Jcall       uint32
+		NewIntArray uint32
+	}
 }
 
 // Compiler is used by a VM to generate machine code for class methods.

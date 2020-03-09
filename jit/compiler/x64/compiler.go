@@ -226,7 +226,14 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		asm.JmpMem(x64.RSI, -8)
 
 	case ir.InstCallGo:
-		return cl.assembleCallGo(inst)
+		sym := inst.Args[0].SymbolID()
+		pkg := cl.ctx.State.Packages[sym.PackageIndex()]
+		class := pkg.Classes[sym.ClassIndex()]
+		method := class.Methods[sym.MemberIndex()]
+		key := fmt.Sprintf("%s/%s.%s", pkg.Name, class.Name, method.Name)
+		fnAddr := cl.ctx.State.GoFuncs[key]
+		return cl.assembleCallGo(fnAddr, method.Descriptor, inst.Dst, inst.Args[1:])
+
 	case ir.InstCallStatic:
 		return cl.assembleCallStatic(inst)
 
@@ -312,7 +319,8 @@ func (cl *Compiler) assembleCallStatic(inst ir.Inst) bool {
 	method := class.Methods[sym.MemberIndex()]
 	i := 1
 	failed := false
-	jclass.MethodDescriptor(method.Descriptor).WalkParams(func(typ jclass.DescriptorType) {
+	signature := jclass.MethodDescriptor(method.Descriptor)
+	signature.WalkParams(func(typ jclass.DescriptorType) {
 		arg := inst.Args[i]
 		disp := int32(frameSize + (i-1)*8)
 		switch typ.Kind {
@@ -368,19 +376,8 @@ func (cl *Compiler) assembleCallStatic(inst ir.Inst) bool {
 	return true
 }
 
-func (cl *Compiler) assembleCallGo(inst ir.Inst) bool {
+func (cl *Compiler) assembleCallGo(fnAddr uintptr, desc string, dst ir.Arg, args []ir.Arg) bool {
 	// TODO: refactor and optimize.
-	asm := cl.asm
-
-	sym := inst.Args[0].SymbolID()
-	pkg := cl.ctx.State.Packages[sym.PackageIndex()]
-	class := pkg.Classes[sym.ClassIndex()]
-	method := class.Methods[sym.MemberIndex()]
-	key := fmt.Sprintf("%s/%s.%s", pkg.Name, class.Name, method.Name)
-	fnAddr := cl.ctx.State.GoFuncs[key]
-	if fnAddr == 0 {
-		return false
-	}
 	const (
 		arg0offset   = -96
 		gocallOffset = 73
@@ -388,14 +385,22 @@ func (cl *Compiler) assembleCallGo(inst ir.Inst) bool {
 		tmp0offset   = 24
 		envOffset    = 16
 	)
+
+	asm := cl.asm // Just for convenience
+
 	offset := 0
-	i := 1
+	i := 0
 	failed := false
-	signature := jclass.MethodDescriptor(method.Descriptor)
+	signature := jclass.MethodDescriptor(desc)
 
 	signature.WalkParams(func(typ jclass.DescriptorType) {
-		arg := inst.Args[i]
+		arg := args[i]
 		switch typ.Kind {
+		case '$':
+			// Dollar ($) is our special marker for env argument.
+			asm.MovqMemReg(x64.RSI, x64.RAX, envOffset)
+			asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(arg))
+			offset += 8
 		case 'I':
 			switch arg.Kind {
 			case ir.ArgIntConst:
@@ -432,13 +437,13 @@ func (cl *Compiler) assembleCallGo(inst ir.Inst) bool {
 
 	asm.MovqRegMem(x64.RSI, x64.RDI, tmp0offset) // Spill SI
 	asm.MovlConstReg(int64(fnAddr), x64.RCX)
-	asm.MovlConstReg(int64(cl.ctx.JcallAddr+gocallOffset), x64.RDI)
+	asm.MovlConstReg(int64(cl.ctx.Funcs.Jcall+gocallOffset), x64.RDI)
 	asm.Raw(0x48, 0x8d, 0x05, 4+2, 0, 0, 0)
 	asm.MovqRegMem(x64.RAX, x64.RBP, -8)
 	asm.JmpReg(x64.RDI)
 	asm.MovqMemReg(x64.RBP, x64.RDI, envOffset)  // Load DI
 	asm.MovqMemReg(x64.RDI, x64.RSI, tmp0offset) // Load SI
-	if inst.Dst.Kind != 0 {
+	if dst.Kind != 0 {
 		// Return values start from a location aligned to a pointer size.
 		if rem := offset % 8; rem != 0 {
 			offset += rem
@@ -446,7 +451,10 @@ func (cl *Compiler) assembleCallGo(inst ir.Inst) bool {
 		switch signature.ReturnType().Kind {
 		case 'I':
 			asm.MovlMemReg(x64.RBP, x64.RAX, int32(arg0offset+offset))
-			asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(inst.Dst))
+			asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
+		case 'J':
+			asm.MovqMemReg(x64.RBP, x64.RAX, int32(arg0offset+offset))
+			asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(dst))
 		default:
 			return false
 		}

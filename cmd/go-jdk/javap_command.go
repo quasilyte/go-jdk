@@ -74,6 +74,7 @@ func (cmd *javapCommand) printFile(filename string) error {
 		Mmap:  &vm.Mmap,
 		State: &vm.State,
 	}
+	jruntime.BindFuncs(&jitCtx)
 	if err := vm.Compiler.Compile(jitCtx, toCompile); err != nil {
 		return fmt.Errorf("compile: %v", err)
 	}
