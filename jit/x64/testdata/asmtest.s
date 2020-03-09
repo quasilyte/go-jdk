@@ -108,6 +108,9 @@ TEXT testAdd(SB), 0, $0-0
         RET
 
 TEXT testMov(SB), 0, $0-0
+        MOVB AX, (AX) // asm.MovbRegMem(RAX, RAX, 0)
+        MOVB CX, 24(SI) // asm.MovbRegMem(RCX, RSI, 24)
+        MOVB BX, -300(BP) // asm.MovbRegMem(RBX, RBP, -300)
         MOVL $0, 0*8(SI) // asm.MovlConst32Mem(0, RSI, 0*8)
         MOVL $1, 0*8(DI) // asm.MovlConst32Mem(1, RDI, 0*8)
         MOVL $1, 1*8(AX) // asm.MovlConst32Mem(1, RAX, 1*8)

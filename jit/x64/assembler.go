@@ -221,6 +221,16 @@ func (a *Assembler) CmplRegMem(xreg uint8, yreg uint8, disp int32) {
 	})
 }
 
+func (a *Assembler) MovbRegMem(srcreg, dstreg uint8, disp int32) {
+	a.push(instruction{
+		opcode: 0x88,
+		reg1:   srcreg,
+		reg2:   dstreg,
+		flags:  flagModRM | flagMemory,
+		disp:   disp,
+	})
+}
+
 func (a *Assembler) MovlRegMem(srcreg, dstreg uint8, disp int32) {
 	a.push(instruction{
 		opcode: 0x89,
