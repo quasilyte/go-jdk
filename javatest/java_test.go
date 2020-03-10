@@ -25,8 +25,10 @@ var tests = []*testParams{
 	{Pkg: "scopes"},
 	{Pkg: "arith1", Input: 100},
 	{Pkg: "gocall1", Input: -100},
+	{Pkg: "gocall2"},
 	{Pkg: "staticcall1"},
 	{Pkg: "staticcall2"},
+	{Pkg: "staticcall3"},
 	{Pkg: "loops1"},
 }
 
@@ -139,6 +141,10 @@ func runTest(t *testing.T, params *testParams) {
 	vm.State.BindGoFunc("testutil/T.printLong", golibPrintLong)
 	vm.State.BindGoFunc("testutil/T.isub", golibIsub)
 	vm.State.BindGoFunc("testutil/T.isub3", golibIsub3)
+	vm.State.BindGoFunc("testutil/T.ii_l", golibII_L)
+	vm.State.BindGoFunc("testutil/T.il_i", golibIL_I)
+	vm.State.BindGoFunc("testutil/T.li_i", golibLI_I)
+	vm.State.BindGoFunc("testutil/T.ilil_i", golibILIL_I)
 
 	pkg, err := loadAndCompilePackage(vm, params.Pkg)
 	if err != nil {
@@ -272,10 +278,10 @@ func loadAndCompilePackage(vm *jruntime.VM, pkg string) (*vmdat.Package, error) 
 	}
 
 	ctx := jit.Context{
-		Mmap:      &vm.Mmap,
-		State:     &vm.State,
-		JcallAddr: jruntime.JcallAddr,
+		Mmap:  &vm.Mmap,
+		State: &vm.State,
 	}
+	jruntime.BindFuncs(&ctx)
 	if err := vm.Compiler.Compile(ctx, packages); err != nil {
 		return nil, fmt.Errorf("compile: %v", err)
 	}

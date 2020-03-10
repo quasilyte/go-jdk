@@ -378,6 +378,7 @@ func (cl *Compiler) assembleCallStatic(inst ir.Inst) bool {
 
 func (cl *Compiler) assembleCallGo(fnAddr uintptr, desc string, dst ir.Arg, args []ir.Arg) bool {
 	// TODO: refactor and optimize.
+
 	const (
 		arg0offset   = -96
 		gocallOffset = 73
@@ -398,10 +399,16 @@ func (cl *Compiler) assembleCallGo(fnAddr uintptr, desc string, dst ir.Arg, args
 		switch typ.Kind {
 		case '$':
 			// Dollar ($) is our special marker for env argument.
+			if rem := offset % 8; rem != 0 {
+				offset += rem
+			}
 			asm.MovqMemReg(x64.RSI, x64.RAX, envOffset)
 			asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(arg))
 			offset += 8
 		case 'I':
+			if rem := offset % 4; rem != 0 {
+				offset += rem
+			}
 			switch arg.Kind {
 			case ir.ArgIntConst:
 				asm.MovlConstMem(arg.Value, x64.RBP, int32(arg0offset+offset))
@@ -413,6 +420,9 @@ func (cl *Compiler) assembleCallGo(fnAddr uintptr, desc string, dst ir.Arg, args
 			}
 			offset += 4
 		case 'J':
+			if rem := offset % 8; rem != 0 {
+				offset += rem
+			}
 			switch arg.Kind {
 			case ir.ArgIntConst:
 				if !fits32bit(arg.Value) {

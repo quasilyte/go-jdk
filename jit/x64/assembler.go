@@ -1,6 +1,8 @@
 package x64
 
-import "math"
+import (
+	"math"
+)
 
 func NewAssembler() *Assembler {
 	return &Assembler{
