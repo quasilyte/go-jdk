@@ -3,6 +3,7 @@ package javatest
 import (
 	"bytes"
 	"fmt"
+	"runtime"
 )
 
 var golibOutput bytes.Buffer
@@ -39,4 +40,8 @@ func golibIL_I(a1 int32, a2 int64) int32 {
 
 func golibILIL_I(a1 int32, a2 int64, a3 int32, a4 int64) int32 {
 	return a1 - int32(a2) - a3 - int32(a4)
+}
+
+func golibGC() {
+	runtime.GC()
 }

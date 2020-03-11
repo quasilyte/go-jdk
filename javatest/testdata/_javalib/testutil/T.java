@@ -32,4 +32,6 @@ public class T {
     public static int ilil_i(int a1, long a2, int a3, long a4) {
         return a1 - (int)a2 - a3 - (int)a4;
     }
+
+    public static void GC() {}
 }

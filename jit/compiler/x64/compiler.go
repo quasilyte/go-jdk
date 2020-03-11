@@ -141,7 +141,58 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 	case ir.InstJump:
 		asm.Jmp(a1.Value)
 
-	case ir.InstLload:
+	case ir.InstArrayLen:
+		asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(a1))
+		asm.MovlMemReg(x64.RAX, x64.RAX, 16)
+		asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
+	case ir.InstIntArrayGet:
+		aref := a1
+		index := a2
+		asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(aref))
+		asm.MovqMemReg(x64.RAX, x64.RAX, 8)
+		switch index.Kind {
+		case ir.ArgIntConst:
+			// rax, [rax+offset]
+			asm.MovlMemReg(x64.RAX, x64.RAX, int32(index.Value)*4)
+		case ir.ArgReg:
+			// TODO:
+			// mov rcx, [rsi+regDisp(index)]
+			// mov rax, [rax+rcx*4]
+			return false
+		}
+		asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
+	case ir.InstIntArraySet:
+		aref := a1
+		index := a2
+		v := inst.Args[2]
+		asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(aref))
+		if index.Kind != ir.ArgIntConst {
+			return false
+		}
+		asm.MovqMemReg(x64.RAX, x64.RAX, 8)
+		switch v.Kind {
+		case ir.ArgIntConst:
+			asm.MovlConstMem(v.Value, x64.RAX, int32(index.Value)*4)
+		case ir.ArgReg:
+			asm.MovlMemReg(x64.RSI, x64.RCX, regDisp(v))
+			asm.MovlRegMem(x64.RCX, x64.RAX, int32(index.Value)*4)
+		default:
+			return false
+		}
+	case ir.InstNewIntArray:
+		fnAddr := cl.ctx.Funcs.NewIntArray
+		ok := cl.assembleCallGo(uintptr(fnAddr), "($I)J", inst.Dst, inst.Args)
+		if !ok {
+			return false
+		}
+		// Result is in RAX register.
+		// We need to put it into the objects slice slot
+		// to avoid premature garbage collection of it.
+		const objectsOffset = 16
+		asm.MovqMemReg(x64.RDI, x64.RCX, objectsOffset)
+		asm.MovqRegMem(x64.RAX, x64.RCX, regDisp(inst.Dst))
+
+	case ir.InstLload, ir.InstAload:
 		switch a1.Kind {
 		case ir.ArgReg:
 			asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(a1))
@@ -299,9 +350,13 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		default:
 			return false
 		}
+
 	case ir.InstConvI2L:
 		asm.MovlqsxMemReg(x64.RSI, x64.RAX, regDisp(a1))
 		asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(dst))
+	case ir.InstConvI2B:
+		asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
+		asm.MovbRegMem(x64.RAX, x64.RSI, regDisp(dst))
 	default:
 		return false
 	}
@@ -402,8 +457,8 @@ func (cl *Compiler) assembleCallGo(fnAddr uintptr, desc string, dst ir.Arg, args
 			if rem := offset % 8; rem != 0 {
 				offset += rem
 			}
-			asm.MovqMemReg(x64.RSI, x64.RAX, envOffset)
-			asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(arg))
+			asm.MovqMemReg(x64.RBP, x64.RAX, envOffset)
+			asm.MovqRegMem(x64.RAX, x64.RBP, int32(arg0offset+offset))
 			offset += 8
 		case 'I':
 			if rem := offset % 4; rem != 0 {

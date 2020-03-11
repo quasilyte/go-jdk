@@ -11,4 +11,6 @@ public class T {
     public static native int li_i(long a1, int a2);
     public static native int il_i(int a1, long a2);
     public static native int ilil_i(int a1, long a2, int a3, long a4);
+
+    public static native void GC();
 }

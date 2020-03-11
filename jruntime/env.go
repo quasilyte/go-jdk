@@ -87,7 +87,12 @@ type envFixed struct {
 	vm *VM
 }
 
+func (env *Env) ResetAllocs() {
+	env.allocBytesLeft = env.allocBytesLimit
+}
+
 func (env *Env) IntCall(m *vmdat.Method) (int64, error) {
+	env.ResetAllocs()
 	jcall(env, &m.Code[0])
 	return *(*int64)(unsafe.Pointer(env.stack)), nil
 }

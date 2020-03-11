@@ -30,6 +30,7 @@ var tests = []*testParams{
 	{Pkg: "staticcall2"},
 	{Pkg: "staticcall3"},
 	{Pkg: "loops1"},
+	{Pkg: "arrays1"},
 }
 
 func TestMain(m *testing.M) {
@@ -145,6 +146,7 @@ func runTest(t *testing.T, params *testParams) {
 	vm.State.BindGoFunc("testutil/T.il_i", golibIL_I)
 	vm.State.BindGoFunc("testutil/T.li_i", golibLI_I)
 	vm.State.BindGoFunc("testutil/T.ilil_i", golibILIL_I)
+	vm.State.BindGoFunc("testutil/T.GC", golibGC)
 
 	pkg, err := loadAndCompilePackage(vm, params.Pkg)
 	if err != nil {
