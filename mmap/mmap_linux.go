@@ -1,9 +1,10 @@
 package mmap
 
 import (
-	"reflect"
 	"syscall"
 	"unsafe"
+
+	"github.com/quasilyte/go-jdk/goreflect"
 )
 
 func mmapExecutable(length int) (Descriptor, []byte, error) {
@@ -30,7 +31,7 @@ func mmapLinux(addr uintptr, length, prot, flags int, fd uintptr, offset int64) 
 	if err != 0 {
 		return d, nil, err
 	}
-	slice := *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{
+	slice := *(*[]byte)(unsafe.Pointer(&goreflect.SliceHeader{
 		Data: ptr,
 		Len:  length,
 		Cap:  length,
