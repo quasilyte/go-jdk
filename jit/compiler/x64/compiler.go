@@ -152,7 +152,6 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		asm.MovqMemReg(x64.RAX, x64.RAX, 8)
 		switch index.Kind {
 		case ir.ArgIntConst:
-			// rax, [rax+offset]
 			asm.MovlMemReg(x64.RAX, x64.RAX, int32(index.Value)*4)
 		case ir.ArgReg:
 			// TODO:
