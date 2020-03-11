@@ -10,12 +10,12 @@ type instruction struct {
 
 	buf [16]byte
 
-	opcode uint8 // 8-bit instruction opcode
-	size   uint8 // Calculated encoded instruction width
-	prefix uint8 // 8-bit instruction prefix (usually REX or none)
-	reg1   uint8 // 3 bits for ModRM.reg
-	reg2   uint8 // 3 bits for ModRM.rm
-	flags  uint8 // Hints on how to encode this instruction
+	opcode uint8  // 8-bit instruction opcode
+	size   uint8  // Calculated encoded instruction width
+	reg1   uint8  // 3 bits for ModRM.reg
+	reg2   uint8  // 3 bits for ModRM.rm
+	index  uint8  // 3 bits for SIB.index
+	flags  uint16 // Hints on how to encode this instruction
 }
 
 func (i instruction) Bytes() []byte {
@@ -23,11 +23,16 @@ func (i instruction) Bytes() []byte {
 }
 
 const (
-	flagMemory uint8 = 1 << iota
+	flagMemory uint16 = 1 << iota
+	flagReg2Op
 	flagModRM
+	flagModSIB
 	flagImm8
 	flagImm32
 	flagImm64
+	flagScale4
+	flagScale8
 	flagPseudo
+	flagRexW
 	flag0F
 )

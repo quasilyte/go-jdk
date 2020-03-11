@@ -8,6 +8,10 @@ func modrm(mod, reg, rm byte) byte {
 	return (mod << 6) | (reg << 3) | (rm << 0)
 }
 
+func sib(scale, index, base byte) byte {
+	return (scale << 6) | (index << 3) | (base << 0)
+}
+
 func appendInt32(buf []byte, v int32) []byte {
 	return append(buf,
 		byte(v>>0),

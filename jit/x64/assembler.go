@@ -113,11 +113,10 @@ func (a *Assembler) Raw(enc ...byte) {
 
 func (a *Assembler) NegqReg(reg uint8) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0xF7,
 		reg1:   op3,
 		reg2:   reg,
-		flags:  flagModRM,
+		flags:  flagModRM | flagRexW,
 	})
 }
 
@@ -142,11 +141,10 @@ func (a *Assembler) NeglMem(reg uint8, disp int32) {
 
 func (a *Assembler) NegqMem(reg uint8, disp int32) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0xF7,
 		reg1:   op3,
 		reg2:   reg,
-		flags:  flagModRM | flagMemory,
+		flags:  flagModRM | flagMemory | flagRexW,
 		disp:   disp,
 	})
 }
@@ -191,11 +189,10 @@ func (a *Assembler) CmpqConstMem(v int64, reg uint8, disp int32) {
 
 func (a *Assembler) CmpqConst8Mem(v int8, reg uint8, disp int32) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0x83,
 		reg1:   op7,
 		reg2:   reg,
-		flags:  flagModRM | flagMemory | flagImm8,
+		flags:  flagModRM | flagMemory | flagImm8 | flagRexW,
 		disp:   disp,
 		imm:    int64(v),
 	})
@@ -203,11 +200,10 @@ func (a *Assembler) CmpqConst8Mem(v int8, reg uint8, disp int32) {
 
 func (a *Assembler) CmpqConst32Mem(v int32, reg uint8, disp int32) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0x81,
 		reg1:   op7,
 		reg2:   reg,
-		flags:  flagModRM | flagMemory | flagImm32,
+		flags:  flagModRM | flagMemory | flagImm32 | flagRexW,
 		disp:   disp,
 		imm:    int64(v),
 	})
@@ -243,6 +239,26 @@ func (a *Assembler) MovlRegMem(srcreg, dstreg uint8, disp int32) {
 	})
 }
 
+func (a *Assembler) MovlRegMemindex(srcreg, dstreg, index uint8) {
+	a.push(instruction{
+		opcode: 0x89,
+		reg1:   srcreg,
+		reg2:   dstreg,
+		flags:  flagModSIB | flagMemory | flagScale4,
+		index:  index,
+	})
+}
+
+func (a *Assembler) MovlMemindexReg(srcreg, dstreg, index uint8) {
+	a.push(instruction{
+		opcode: 0x8B,
+		reg1:   dstreg,
+		reg2:   srcreg,
+		index:  index,
+		flags:  flagModSIB | flagMemory | flagScale4,
+	})
+}
+
 func (a *Assembler) MovlMemReg(srcreg, dstreg uint8, disp int32) {
 	a.push(instruction{
 		opcode: 0x8B,
@@ -255,6 +271,21 @@ func (a *Assembler) MovlMemReg(srcreg, dstreg uint8, disp int32) {
 
 func (a *Assembler) MovlConstMem(v int64, reg uint8, disp int32) {
 	a.MovlConst32Mem(int32(v), reg, disp)
+}
+
+func (a *Assembler) MovlConstMemindex(v int64, reg uint8, index uint8) {
+	a.MovlConst32Memindex(int32(v), reg, index)
+}
+
+func (a *Assembler) MovlConst32Memindex(v int32, reg uint8, index uint8) {
+	a.push(instruction{
+		opcode: 0xC7,
+		reg1:   op0,
+		reg2:   reg,
+		index:  index,
+		flags:  flagModSIB | flagMemory | flagImm32 | flagScale4,
+		imm:    int64(v),
+	})
 }
 
 func (a *Assembler) MovlConst32Mem(v int32, reg uint8, disp int32) {
@@ -274,8 +305,9 @@ func (a *Assembler) MovlConstReg(v int64, reg uint8) {
 
 func (a *Assembler) MovlConst32Reg(v int32, reg uint8) {
 	a.push(instruction{
-		opcode: 0xB8 + reg,
-		flags:  flagImm32,
+		opcode: 0xB8,
+		reg2:   reg,
+		flags:  flagImm32 | flagReg2Op,
 		imm:    int64(v),
 	})
 }
@@ -296,30 +328,28 @@ func (a *Assembler) MovqConstReg(v int64, reg uint8) {
 
 func (a *Assembler) MovqConst32Reg(v int32, reg uint8) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0xC7,
 		reg1:   op0,
 		reg2:   reg,
-		flags:  flagImm32 | flagModRM,
+		flags:  flagImm32 | flagModRM | flagRexW,
 		imm:    int64(v),
 	})
 }
 
 func (a *Assembler) MovqConst64Reg(v int64, reg uint8) {
 	a.push(instruction{
-		prefix: rexW,
-		opcode: 0xB8 + reg,
-		flags:  flagImm64,
+		opcode: 0xB8,
+		reg2:   reg,
+		flags:  flagImm64 | flagRexW | flagReg2Op,
 		imm:    v,
 	})
 }
 
 func (a *Assembler) MovqConst32Mem(v int32, reg uint8, disp int32) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0xc7,
 		reg2:   reg,
-		flags:  flagModRM | flagMemory | flagImm32,
+		flags:  flagModRM | flagMemory | flagImm32 | flagRexW,
 		disp:   disp,
 		imm:    int64(v),
 	})
@@ -327,22 +357,20 @@ func (a *Assembler) MovqConst32Mem(v int32, reg uint8, disp int32) {
 
 func (a *Assembler) MovqRegMem(srcreg, dstreg uint8, disp int32) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0x89,
 		reg1:   srcreg,
 		reg2:   dstreg,
-		flags:  flagModRM | flagMemory,
+		flags:  flagModRM | flagMemory | flagRexW,
 		disp:   disp,
 	})
 }
 
 func (a *Assembler) MovqMemReg(srcreg, dstreg uint8, disp int32) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0x8B,
 		reg1:   dstreg,
 		reg2:   srcreg,
-		flags:  flagModRM | flagMemory,
+		flags:  flagModRM | flagMemory | flagRexW,
 		disp:   disp,
 	})
 }
@@ -455,33 +483,30 @@ func (a *Assembler) AddqConstReg(v int64, reg uint8) {
 
 func (a *Assembler) AddqConst8Reg(v int8, reg uint8) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0x83,
 		reg1:   op0,
 		reg2:   reg,
-		flags:  flagModRM | flagImm8,
+		flags:  flagModRM | flagImm8 | flagRexW,
 		imm:    int64(v),
 	})
 }
 
 func (a *Assembler) AddqConst32Reg(v int32, reg uint8) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0x81,
 		reg1:   op0,
 		reg2:   reg,
-		flags:  flagModRM | flagImm32,
+		flags:  flagModRM | flagImm32 | flagRexW,
 		imm:    int64(v),
 	})
 }
 
 func (a *Assembler) AddqConst8Mem(v int8, reg uint8, disp int32) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0x83,
 		reg1:   op0,
 		reg2:   reg,
-		flags:  flagModRM | flagMemory | flagImm8,
+		flags:  flagModRM | flagMemory | flagImm8 | flagRexW,
 		disp:   disp,
 		imm:    int64(v),
 	})
@@ -489,11 +514,10 @@ func (a *Assembler) AddqConst8Mem(v int8, reg uint8, disp int32) {
 
 func (a *Assembler) AddqConst32Mem(v int32, reg uint8, disp int32) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0x81,
 		reg1:   op0,
 		reg2:   reg,
-		flags:  flagModRM | flagMemory | flagImm32,
+		flags:  flagModRM | flagMemory | flagImm32 | flagRexW,
 		disp:   disp,
 		imm:    int64(v),
 	})
@@ -501,11 +525,10 @@ func (a *Assembler) AddqConst32Mem(v int32, reg uint8, disp int32) {
 
 func (a *Assembler) MovlqsxMemReg(srcreg, dstreg uint8, disp int32) {
 	a.push(instruction{
-		prefix: rexW,
 		opcode: 0x63,
 		reg1:   dstreg,
 		reg2:   srcreg,
-		flags:  flagModRM | flagMemory,
+		flags:  flagModRM | flagMemory | flagRexW,
 		disp:   disp,
 	})
 }
@@ -613,17 +636,35 @@ func (a *Assembler) encode(inst *instruction) {
 	buf := inst.buf[:0]
 
 	// Encode prefix.
-	if inst.prefix != 0 {
-		buf = append(buf, inst.prefix)
+	var rexPrefix byte
+	if inst.flags&flagRexW != 0 {
+		rexPrefix |= rexW
 	}
+	if inst.reg1 >= R8 {
+		rexPrefix |= rexR
+	}
+	if inst.reg2 >= R8 {
+		rexPrefix |= rexB
+	}
+	if rexPrefix != 0 {
+		buf = append(buf, rexPrefix)
+	}
+
+	reg1 := inst.reg1 & regBitMask
+	reg2 := inst.reg2 & regBitMask
 
 	// Encode opcode.
 	if inst.flags&flag0F != 0 {
 		buf = append(buf, 0x0F)
 	}
-	buf = append(buf, inst.opcode)
+	opcode := inst.opcode
+	if inst.flags&flagReg2Op != 0 {
+		opcode += reg2
+	}
+	buf = append(buf, opcode)
 
 	// Encode ModRM.
+	// If ModSIB is set, we encode ModRM along with SIB.
 	if inst.flags&flagModRM != 0 {
 		if inst.flags&flagMemory != 0 {
 			var mod byte
@@ -635,9 +676,17 @@ func (a *Assembler) encode(inst *instruction) {
 			default:
 				mod = disp32
 			}
-			buf = append(buf, modrm(mod, inst.reg1, inst.reg2))
+			buf = append(buf, modrm(mod, reg1, reg2))
 		} else {
-			buf = append(buf, modrm(regreg, inst.reg1, inst.reg2))
+			buf = append(buf, modrm(regreg, reg1, reg2))
+		}
+	} else if inst.flags&flagModSIB != 0 {
+		buf = append(buf, modrm(0, reg1, 4))
+		switch {
+		case inst.flags&flagScale4 != 0:
+			buf = append(buf, sib(scale4, inst.index, reg2))
+		case inst.flags&flagScale8 != 0:
+			buf = append(buf, sib(scale8, inst.index, reg2))
 		}
 	}
 
