@@ -538,28 +538,32 @@ func TestAsm(t *testing.T) {
 			want: []expected{
 				{250, "IDIVL (AX)", "f738"},
 				{251, "IDIVL 16(CX)", "f77910"},
+				{252, "IDIVL AX", "f7f8"},
+				{253, "IDIVL BX", "f7fb"},
 			},
 			run: func(asm *Assembler) {
 				asm.IdivlMem(RAX, 0)
 				asm.IdivlMem(RCX, 16)
+				asm.IdivlReg(RAX)
+				asm.IdivlReg(RBX)
 			},
 		},
 
 		{
 			name: "testMovIndex",
 			want: []expected{
-				{255, "MOVL (AX)(CX*4), AX", "8b0488"},
-				{256, "MOVL (CX)(CX*4), BX", "8b1c89"},
-				{257, "MOVL (SI)(AX*4), CX", "8b0c86"},
-				{258, "MOVL (AX)(SI*4), CX", "8b0cb0"},
-				{259, "MOVL $0, (AX)(CX*4)", "c7048800000000"},
-				{260, "MOVL $14, (DX)(DI*4)", "c704ba0e000000"},
-				{261, "MOVL $-6, (SI)(BX*4)", "c7049efaffffff"},
-				{262, "MOVL AX, (AX)(CX*4)", "890488"},
-				{263, "MOVL DX, (DI)(AX*4)", "891487"},
-				{264, "MOVL SI, (SI)(SI*4)", "8934b6"},
-				{265, "MOVL CX, (CX)(CX*4)", "890c89"},
-				{266, "MOVL R8, (SI)(CX*4)", "4489048e"},
+				{257, "MOVL (AX)(CX*4), AX", "8b0488"},
+				{258, "MOVL (CX)(CX*4), BX", "8b1c89"},
+				{259, "MOVL (SI)(AX*4), CX", "8b0c86"},
+				{260, "MOVL (AX)(SI*4), CX", "8b0cb0"},
+				{261, "MOVL $0, (AX)(CX*4)", "c7048800000000"},
+				{262, "MOVL $14, (DX)(DI*4)", "c704ba0e000000"},
+				{263, "MOVL $-6, (SI)(BX*4)", "c7049efaffffff"},
+				{264, "MOVL AX, (AX)(CX*4)", "890488"},
+				{265, "MOVL DX, (DI)(AX*4)", "891487"},
+				{266, "MOVL SI, (SI)(SI*4)", "8934b6"},
+				{267, "MOVL CX, (CX)(CX*4)", "890c89"},
+				{268, "MOVL R8, (SI)(CX*4)", "4489048e"},
 			},
 			run: func(asm *Assembler) {
 				asm.MovlMemindexReg(RAX, RAX, RCX)

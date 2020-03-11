@@ -385,6 +385,15 @@ func (a *Assembler) SublMemReg(srcreg, dstreg uint8, disp int32) {
 	})
 }
 
+func (a *Assembler) IdivlReg(reg uint8) {
+	a.push(instruction{
+		opcode: 0xF7,
+		reg1:   op7,
+		reg2:   reg,
+		flags:  flagModRM,
+	})
+}
+
 func (a *Assembler) IdivlMem(reg uint8, disp int32) {
 	a.push(instruction{
 		opcode: 0xF7,

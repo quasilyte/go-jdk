@@ -249,6 +249,8 @@ TEXT testCdq(SB), 0, $0-0
 TEXT testIdivl(SB), 0, $0-0
         IDIVL (AX) // asm.IdivlMem(RAX, 0)
         IDIVL 16(CX) // asm.IdivlMem(RCX, 16)
+        IDIVL AX // asm.IdivlReg(RAX)
+        IDIVL BX // asm.IdivlReg(RBX)
         RET
 
 TEXT testMovIndex(SB), 0, $0-0
