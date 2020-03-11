@@ -366,7 +366,7 @@ func (d *Decoder) skipVerificationTypes(n int) error {
 		}
 		switch tag {
 		case itemUninitialized, itemObject:
-			_, err = d.r.Discard(1)
+			_, err = d.r.Discard(2)
 			if err != nil {
 				return fmt.Errorf("verification_type_info%d: tag=%d: %v", i, tag, err)
 			}
