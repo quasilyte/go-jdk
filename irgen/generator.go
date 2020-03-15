@@ -17,8 +17,6 @@ type generator struct {
 	m         *jclass.Method
 	tmpOffset int64
 
-	tmp       int64
-	freelist  []int64
 	st        operandStack
 	out       []ir.Inst
 	toResolve []unresolvedBranch
@@ -36,32 +34,9 @@ func (g *generator) Generate(i int, m *ir.Method) error {
 
 func (g *generator) reset(m *jclass.Method) {
 	g.m = m
-	g.tmp = 0
-	g.freelist = g.freelist[:0]
 	g.st.reset()
 	g.out = g.out[:0]
 	g.toResolve = g.toResolve[:0]
-}
-
-func (g *generator) nextTmp() int64 {
-	if len(g.freelist) != 0 {
-		i := g.freelist[len(g.freelist)-1]
-		g.freelist = g.freelist[:len(g.freelist)-1]
-		return i
-	}
-	v := g.tmp
-	g.tmp++
-	return v
-}
-
-func (g *generator) drop(n int) {
-	for i := 0; i < n; i++ {
-		v := g.st.get(i)
-		if v.kind == valueTmp {
-			g.freelist = append(g.freelist, v.value)
-		}
-	}
-	g.st.drop(n)
 }
 
 func (g *generator) irArg(n int) ir.Arg {
@@ -195,10 +170,10 @@ func (g *generator) generate(dst *ir.Method) error {
 					g.irArg(0), // value
 				},
 			})
-			g.drop(3)
+			g.st.drop(3)
 
 		case bytecode.Iaload:
-			tmp := g.nextTmp()
+			tmp := g.st.nextTmp()
 			dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
 			g.out = append(g.out, ir.Inst{
 				Dst:  dst,
@@ -208,7 +183,7 @@ func (g *generator) generate(dst *ir.Method) error {
 					g.irArg(0), // index
 				},
 			})
-			g.drop(2)
+			g.st.drop(2)
 			g.st.push(valueTmp, tmp)
 
 		case bytecode.Dup:
@@ -216,14 +191,14 @@ func (g *generator) generate(dst *ir.Method) error {
 			g.st.push(v.kind, v.value)
 
 		case bytecode.Arraylength:
-			tmp := g.nextTmp()
+			tmp := g.st.nextTmp()
 			dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
 			g.out = append(g.out, ir.Inst{
 				Dst:  dst,
 				Kind: ir.InstArrayLen,
 				Args: []ir.Arg{g.irArg(0)},
 			})
-			g.drop(1)
+			g.st.drop(1)
 			g.st.push(valueTmp, tmp)
 
 		case bytecode.Iadd:
@@ -341,7 +316,7 @@ func (g *generator) generate(dst *ir.Method) error {
 			var dst ir.Arg
 			var tmp int64
 			if !strings.HasSuffix(m.Descriptor, ")V") {
-				tmp = g.nextTmp()
+				tmp = g.st.nextTmp()
 				dst = ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
 			}
 			op := ir.InstCallStatic
@@ -353,7 +328,7 @@ func (g *generator) generate(dst *ir.Method) error {
 				Kind: op,
 				Args: args,
 			})
-			g.drop(argc)
+			g.st.drop(argc)
 			if dst.Kind != 0 {
 				g.st.push(valueTmp, tmp)
 			}
@@ -410,7 +385,7 @@ func (g *generator) generate(dst *ir.Method) error {
 	out := make([]ir.Inst, len(g.out))
 	copy(out, g.out)
 	dst.Code = out
-	dst.Out.FrameSlots = int(g.tmpOffset + g.tmp)
+	dst.Out.FrameSlots = int(g.tmpOffset + g.st.tmp)
 	return nil
 }
 
@@ -433,7 +408,7 @@ func (g *generator) convertCondJump(code []byte, pc int, kind ir.InstKind) {
 	if g.st.top().kind != valueFlags {
 		panic(fmt.Sprintf("%s arg is not flags", kind))
 	}
-	g.drop(1)
+	g.st.drop(1)
 }
 
 func (g *generator) convertLoad(pc int, frames []jclass.StackMapFrame, prevOp bytecode.Op, index int64, kind ir.InstKind) {
@@ -443,8 +418,8 @@ func (g *generator) convertLoad(pc int, frames []jclass.StackMapFrame, prevOp by
 			panic(fmt.Sprintf("no frame for pc=%d", pc))
 		}
 		diff := len(g.st.values) - int(frame.StackDepth)
-		g.drop(diff)
-		tmp := g.nextTmp()
+		g.st.drop(diff)
+		tmp := g.st.nextTmp()
 		dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
 		g.out = append(g.out, ir.Inst{
 			Dst:  dst,
@@ -464,7 +439,7 @@ func (g *generator) convertStore(index int64, kind ir.InstKind) {
 		Kind: kind,
 		Args: []ir.Arg{g.irArg(0)},
 	})
-	g.drop(1)
+	g.st.drop(1)
 }
 
 func (g *generator) convertCmpZero() {
@@ -484,7 +459,7 @@ func (g *generator) convertCmpZero() {
 			ir.Arg{Kind: ir.ArgIntConst, Value: 0},
 		},
 	})
-	g.drop(1)
+	g.st.drop(1)
 	g.st.push(valueFlags, 0)
 }
 
@@ -494,7 +469,7 @@ func (g *generator) convertCmp(kind ir.InstKind) {
 		Kind: kind,
 		Args: []ir.Arg{g.irArg(1), g.irArg(0)},
 	})
-	g.drop(2)
+	g.st.drop(2)
 	g.st.push(valueFlags, 0)
 }
 
@@ -520,7 +495,7 @@ func (g *generator) convertNewArray(code []byte, pc int) {
 		kind = ir.InstNewLongArray
 	}
 
-	tmp := g.nextTmp()
+	tmp := g.st.nextTmp()
 	dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
 	g.out = append(g.out, ir.Inst{
 		Dst:  dst,
@@ -530,31 +505,31 @@ func (g *generator) convertNewArray(code []byte, pc int) {
 			g.irArg(0),
 		},
 	})
-	g.drop(1)
+	g.st.drop(1)
 	g.st.push(valueTmp, tmp)
 }
 
 func (g *generator) convertUnaryOp(kind ir.InstKind) {
-	tmp := g.nextTmp()
+	tmp := g.st.nextTmp()
 	dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
 	g.out = append(g.out, ir.Inst{
 		Dst:  dst,
 		Kind: kind,
 		Args: []ir.Arg{g.irArg(0)},
 	})
-	g.drop(1)
+	g.st.drop(1)
 	g.st.push(valueTmp, tmp)
 }
 
 func (g *generator) convertBinOp(kind ir.InstKind) {
-	tmp := g.nextTmp()
+	tmp := g.st.nextTmp()
 	dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
 	g.out = append(g.out, ir.Inst{
 		Dst:  dst,
 		Kind: kind,
 		Args: []ir.Arg{g.irArg(1), g.irArg(0)},
 	})
-	g.drop(2)
+	g.st.drop(2)
 	g.st.push(valueTmp, tmp)
 }
 
@@ -563,5 +538,5 @@ func (g *generator) convertRet(kind ir.InstKind) {
 		Kind: kind,
 		Args: []ir.Arg{g.irArg(0)},
 	})
-	g.drop(1)
+	g.st.drop(1)
 }

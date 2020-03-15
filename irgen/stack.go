@@ -2,13 +2,28 @@ package irgen
 
 // operandStack simulates JVM run-time operands stack.
 type operandStack struct {
-	values []stackValue
+	tmp      int64
+	values   []stackValue
+	freelist []int64
 }
 
 // reset clears a stack.
 // Memory is re-used.
 func (st *operandStack) reset() {
+	st.tmp = 0
 	st.values = st.values[:0]
+	st.freelist = st.freelist[:0]
+}
+
+func (st *operandStack) nextTmp() int64 {
+	if len(st.freelist) != 0 {
+		i := st.freelist[len(st.freelist)-1]
+		st.freelist = st.freelist[:len(st.freelist)-1]
+		return i
+	}
+	v := st.tmp
+	st.tmp++
+	return v
 }
 
 func (st *operandStack) push(kind valueKind, v int64) {
@@ -22,6 +37,13 @@ func (st *operandStack) top() stackValue {
 
 // drop removes n top values from a stack.
 func (st *operandStack) drop(n int) {
+	for i := 0; i < n; i++ {
+		v := st.get(i)
+		if v.kind == valueTmp {
+			st.freelist = append(st.freelist, v.value)
+		}
+	}
+
 	st.values = st.values[:len(st.values)-n]
 }
 
