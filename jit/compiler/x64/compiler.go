@@ -186,11 +186,10 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		}
 	case ir.InstNewIntArray:
 		fnAddr := cl.ctx.Funcs.NewIntArray
-		ok := cl.assembleCallGo(uintptr(fnAddr), "($I)J", inst.Dst, inst.Args)
+		ok := cl.assembleCallGo(uintptr(fnAddr), "($I)LObject;", inst.Dst, inst.Args)
 		if !ok {
 			return false
 		}
-		asm.MovqRegMem(x64.RAX, x64.RSI, ptrDisp(inst.Dst))
 
 	case ir.InstAload:
 		switch a1.Kind {
@@ -561,11 +560,15 @@ func (cl *Compiler) assembleCallGo(fnAddr uintptr, desc string, dst ir.Arg, args
 		if rem := offset % 8; rem != 0 {
 			offset += rem
 		}
-		switch signature.ReturnType().Kind {
-		case 'I':
+		typ := signature.ReturnType()
+		switch {
+		case typ.Dims != 0 || typ.Kind == 'L':
+			asm.MovqMemReg(x64.RBP, x64.RAX, int32(arg0offset+offset))
+			asm.MovqRegMem(x64.RAX, x64.RSI, ptrDisp(dst))
+		case typ.Kind == 'I':
 			asm.MovlMemReg(x64.RBP, x64.RAX, int32(arg0offset+offset))
 			asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
-		case 'J':
+		case typ.Kind == 'J':
 			asm.MovqMemReg(x64.RBP, x64.RAX, int32(arg0offset+offset))
 			asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(dst))
 		default:
