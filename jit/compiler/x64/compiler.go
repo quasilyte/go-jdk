@@ -186,7 +186,7 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		}
 	case ir.InstNewIntArray:
 		fnAddr := cl.ctx.Funcs.NewIntArray
-		ok := cl.assembleCallGo(uintptr(fnAddr), "($I)LObject;", inst.Dst, inst.Args)
+		ok := cl.assembleCallGo(uintptr(fnAddr), "($I)[I", inst.Dst, inst.Args)
 		if !ok {
 			return false
 		}
