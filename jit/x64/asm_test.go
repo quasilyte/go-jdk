@@ -580,6 +580,88 @@ func TestAsm(t *testing.T) {
 				asm.MovlRegMemindex(R8, RSI, RCX)
 			},
 		},
+
+		{
+			name: "testJle1",
+			want: []expected{
+				{272, "JLE forward2", "7e00"},
+				{274, "JLE forward1", "7e01"},
+				{275, "NOP1", "90"},
+				{277, "NOP1", "90"},
+			},
+			run: func(asm *Assembler) {
+				asm.Jle(2)
+				asm.Label(2)
+				asm.Jle(1)
+				asm.Nop(1)
+				asm.Label(1)
+				asm.Nop(1)
+			},
+		},
+
+		{
+			name: "testJle2",
+			want: []expected{
+				{282, "NOP1", "90"},
+				{283, "JLE l1", "7e03"},
+				{285, "NOP1", "90"},
+				{286, "JLE l2", "7efa"},
+				{288, "NOP1", "90"},
+				{289, "JLE l3", "7efa"},
+			},
+			run: func(asm *Assembler) {
+				asm.Label(2)
+				asm.Nop(1)
+				asm.Jle(1)
+				asm.Label(3)
+				asm.Nop(1)
+				asm.Jle(2)
+				asm.Label(1)
+				asm.Nop(1)
+				asm.Jle(3)
+			},
+		},
+
+		{
+			name: "testJne1",
+			want: []expected{
+				{293, "JNE forward2", "7500"},
+				{295, "JNE forward1", "7501"},
+				{296, "NOP1", "90"},
+				{298, "NOP1", "90"},
+			},
+			run: func(asm *Assembler) {
+				asm.Jne(2)
+				asm.Label(2)
+				asm.Jne(1)
+				asm.Nop(1)
+				asm.Label(1)
+				asm.Nop(1)
+			},
+		},
+
+		{
+			name: "testJne2",
+			want: []expected{
+				{303, "NOP1", "90"},
+				{304, "JNE l1", "7503"},
+				{306, "NOP1", "90"},
+				{307, "JNE l2", "75fa"},
+				{309, "NOP1", "90"},
+				{310, "JNE l3", "75fa"},
+			},
+			run: func(asm *Assembler) {
+				asm.Label(2)
+				asm.Nop(1)
+				asm.Jne(1)
+				asm.Label(3)
+				asm.Nop(1)
+				asm.Jne(2)
+				asm.Label(1)
+				asm.Nop(1)
+				asm.Jne(3)
+			},
+		},
 	}
 
 	for _, test := range tests {

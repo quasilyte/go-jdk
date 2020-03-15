@@ -267,3 +267,45 @@ TEXT testMovIndex(SB), 0, $0-0
         MOVL CX, (CX)(CX*4) // asm.MovlRegMemindex(RCX, RCX, RCX)
         MOVL R8, (SI)(CX*4) // asm.MovlRegMemindex(R8, RSI, RCX)
         RET
+
+TEXT testJle1(SB), 0, $0-0
+        JLE forward2 // asm.Jle(2)
+forward2:
+        JLE forward1 // asm.Label(2); asm.Jle(1)
+        NOP1         // asm.Nop(1)
+forward1:
+        NOP1 // asm.Label(1); asm.Nop(1)
+        RET
+
+TEXT testJle2(SB), 0, $0-0
+l2:
+        NOP1   // asm.Label(2); asm.Nop(1)
+        JLE l1 // asm.Jle(1)
+l3:
+        NOP1   // asm.Label(3); asm.Nop(1)
+        JLE l2 // asm.Jle(2)
+l1:
+        NOP1   // asm.Label(1); asm.Nop(1)
+        JLE l3 // asm.Jle(3)
+        RET
+
+TEXT testJne1(SB), 0, $0-0
+        JNE forward2 // asm.Jne(2)
+forward2:
+        JNE forward1 // asm.Label(2); asm.Jne(1)
+        NOP1         // asm.Nop(1)
+forward1:
+        NOP1 // asm.Label(1); asm.Nop(1)
+        RET
+
+TEXT testJne2(SB), 0, $0-0
+l2:
+        NOP1   // asm.Label(2); asm.Nop(1)
+        JNE l1 // asm.Jne(1)
+l3:
+        NOP1   // asm.Label(3); asm.Nop(1)
+        JNE l2 // asm.Jne(2)
+l1:
+        NOP1   // asm.Label(1); asm.Nop(1)
+        JNE l3 // asm.Jne(3)
+        RET

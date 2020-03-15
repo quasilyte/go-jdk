@@ -52,12 +52,20 @@ func (a *Assembler) Jmp(labelID int64) {
 	a.pushJmp(jmp8op, labelID)
 }
 
+func (a *Assembler) Jne(labelID int64) {
+	a.pushJcc(jne8op, labelID)
+}
+
 func (a *Assembler) Jge(labelID int64) {
 	a.pushJcc(jge8op, labelID)
 }
 
 func (a *Assembler) Jlt(labelID int64) {
 	a.pushJcc(jlt8op, labelID)
+}
+
+func (a *Assembler) Jle(labelID int64) {
+	a.pushJcc(jle8op, labelID)
 }
 
 func (a *Assembler) Jgt(labelID int64) {
