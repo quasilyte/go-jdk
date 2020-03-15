@@ -13,3 +13,5 @@ Key features:
 * Cheap `Go->JVM` calls
 * Cheap `JVM->Go` calls
 * `native` Java methods can be written in Go
+
+> Note: this project is in its early state.
