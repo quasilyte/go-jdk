@@ -15,3 +15,17 @@ Key features:
 * `native` Java methods can be written in Go
 
 > Note: this project is in its early state.
+
+```bash
+# Run Java class method (main or any other static method):
+go-jdk run -class Foo.class -method helloWorld
+
+# Disassemble Java class file with go-jdk:
+go-jdk javap Foo.class
+
+# Print IR representation instead of JVM bytecode:
+go-jdk javap -format=ir Foo.class
+
+# Print Java class dependencies:
+go-jdk jdeps Foo.class
+```
