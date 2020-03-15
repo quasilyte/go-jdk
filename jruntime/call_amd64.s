@@ -7,7 +7,7 @@
 #define JCALL(fnreg) \
         BYTE $0x48; BYTE $0x8d; BYTE $0x05; BYTE $9; BYTE $0; BYTE $0; BYTE $0; \
         MOVQ AX, (SI) \
-        ADDQ $8, SI \
+        ADDQ $16, SI \
         JMP fnreg
 
 // Register roles:
@@ -20,8 +20,9 @@
 //
 // $96 bytes for Go call arguments space.
 // $16 bytes for 2 pointer arguments.
-// func jcall(e *Env, code *byte)
-TEXT ·jcall(SB), 0, $96-16
+
+// func jcallScalar(e *Env, code *byte)
+TEXT ·jcallScalar(SB), 0, $96-16
         // We only use local stack frame to pass Go func arguments.
         // As long as pointers that are placed there are also
         // reachable from other parts of the program, we should be fine.
@@ -31,7 +32,7 @@ TEXT ·jcall(SB), 0, $96-16
         MOVQ 1*8(DI), SI // stack is always at SI
         MOVQ code+8(FP), CX
         JCALL(CX)
-        MOVQ AX, -8(SI) // Save called function result, if any
+        MOVQ AX, -16(SI) // Save called function result, if any
         RET
 gocall:
         CALL CX

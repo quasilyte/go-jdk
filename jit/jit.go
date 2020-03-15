@@ -11,7 +11,7 @@ type Context struct {
 	Mmap  *mmap.Manager
 
 	Funcs struct {
-		Jcall       uint32
+		JcallScalar uint32
 		NewIntArray uint32
 	}
 }

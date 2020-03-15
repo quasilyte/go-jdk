@@ -29,8 +29,13 @@ var tests = []*testParams{
 	{Pkg: "staticcall1"},
 	{Pkg: "staticcall2"},
 	{Pkg: "staticcall3"},
+	{Pkg: "staticfinal"},
 	{Pkg: "loops1"},
 	{Pkg: "arrays1"},
+	{Pkg: "arrays2"},
+	{Pkg: "bubblesort"},
+	{Pkg: "arrayreverse"},
+	{Pkg: "eratosthenes", Input: 30},
 }
 
 func TestMain(m *testing.M) {
@@ -140,6 +145,7 @@ func runTest(t *testing.T, params *testParams) {
 
 	vm.State.BindGoFunc("testutil/T.printInt", golibPrintInt)
 	vm.State.BindGoFunc("testutil/T.printLong", golibPrintLong)
+	vm.State.BindGoFunc("testutil/T.printIntArray", golibPrintIntArray)
 	vm.State.BindGoFunc("testutil/T.isub", golibIsub)
 	vm.State.BindGoFunc("testutil/T.isub3", golibIsub3)
 	vm.State.BindGoFunc("testutil/T.ii_l", golibII_L)

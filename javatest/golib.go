@@ -4,6 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"runtime"
+	"strconv"
+	"strings"
+
+	"github.com/quasilyte/go-jdk/jruntime"
 )
 
 var golibOutput bytes.Buffer
@@ -16,6 +20,15 @@ func golibPrintInt(x int32) {
 
 func golibPrintLong(x int64) {
 	fmt.Fprintf(&golibOutput, "%d\n", x)
+}
+
+func golibPrintIntArray(xs *jruntime.IntArrayObject) {
+	var parts []string
+	for _, x := range xs.AsSlice() {
+		p := strconv.Itoa(int(x))
+		parts = append(parts, p)
+	}
+	fmt.Fprintf(&golibOutput, "[%s]\n", strings.Join(parts, ", "))
 }
 
 func golibIsub(x, y int32) int32 {

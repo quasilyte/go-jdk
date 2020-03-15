@@ -7,7 +7,7 @@ import (
 )
 
 func BindFuncs(ctx *jit.Context) {
-	ctx.Funcs.Jcall = funcAddr(jcall)
+	ctx.Funcs.JcallScalar = funcAddr(jcallScalar)
 	ctx.Funcs.NewIntArray = funcAddr(NewIntArray)
 }
 

@@ -23,18 +23,15 @@ type EnvConfig struct {
 	// Zero value means "default value" which is big enough for most use cases.
 	AllocBytesLimit int64
 
-	// StackMemory is a memory that can be used by a running program.
+	// StackMemory is a stack size in bytes that can be used by a running program.
 	//
 	// Stack is used to allocate local stack slots, call frames, etc.
 	// Setting lower value effectively limits how deep the recursion can go.
 	// If there is not enough stack memory for another function call,
 	// VM execution is terminated.
 	//
-	// Slice ownership is passed into Env, it should not be
-	// modified outside of it afterwards.
-	//
-	// empty (or nil) slice will result in a new memory allocation of default size.
-	StackMemory []byte
+	// Value of 0 will result in in a default stack size allocation.
+	StackMemory int64
 }
 
 // NewEnv returns configured execution unit for the VM.
@@ -44,21 +41,15 @@ func NewEnv(vm *VM, cfg *EnvConfig) *Env {
 	var env Env
 	env.vm = vm
 
-	var stack []byte
-	if cfg.StackMemory == nil {
-		stack = make([]byte, megabyte/4)
-	} else {
-		stack = cfg.StackMemory
+	stackMemory := cfg.StackMemory
+	if stackMemory == 0 {
+		stackMemory = megabyte
 	}
-	env.stack = &stack[0]
+	env.slots = make([]stackSlot, stackMemory)
+	env.stack = &env.slots[0]
 
-	// TODO(quasilyte): can we find a safe heuristic
-	// for objects count instead of preparing 100% slots?
-	// FIXME: this code implies 64-bit platform.
-	objects := make([]*Object, len(stack)/8)
-	env.objects = &objects[0]
-
-	if cfg.AllocBytesLimit == 0 {
+	env.allocBytesLimit = cfg.AllocBytesLimit
+	if env.allocBytesLimit == 0 {
 		env.allocBytesLimit = megabyte
 	}
 
@@ -70,6 +61,13 @@ type Env struct {
 	envFixed // Should be the first struct member
 
 	allocBytesLimit int64
+
+	slots []stackSlot
+}
+
+type stackSlot struct {
+	scalar int64
+	ptr    *Object
 }
 
 type envFixed struct {
@@ -79,27 +77,29 @@ type envFixed struct {
 	// into Env struct itself instead.
 	// FIXME: this layout implies 64-bit platform.
 
-	allocBytesLeft int64    // offset=0
-	stack          *byte    // offset=8
-	objects        **Object // offset=16
-	tmp            uint64   // offset=24
+	allocBytesLeft int64      // offset=0
+	stack          *stackSlot // offset=8
+	_              uint64     // offset=16 (reserved)
+	tmp            uint64     // offset=24
 
 	vm *VM
 }
 
-func (env *Env) ResetAllocs() {
-	env.allocBytesLeft = env.allocBytesLimit
+func (env *Env) GC() {
+	for _, slot := range env.slots {
+		slot.ptr = nil
+	}
 }
 
 func (env *Env) IntCall(m *vmdat.Method) (int64, error) {
-	env.ResetAllocs()
-	jcall(env, &m.Code[0])
-	return *(*int64)(unsafe.Pointer(env.stack)), nil
+	env.allocBytesLeft = env.allocBytesLimit
+	jcallScalar(env, &m.Code[0])
+	return env.stack.scalar, nil
 }
 
 func (env *Env) IntArg(i int, v int64) {
-	ptr := unsafe.Pointer(uintptr(unsafe.Pointer(env.stack)) + uintptr(i*8) + 8)
-	*(*int64)(ptr) = v
+	ptr := unsafe.Pointer(uintptr(unsafe.Pointer(env.stack)) + uintptr(i*16) + 16)
+	(*stackSlot)(ptr).scalar = v
 }
 
 // trackAllocations checks whether we can allocate size bytes.

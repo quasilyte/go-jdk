@@ -211,6 +211,10 @@ func (g *generator) generate(dst *ir.Method) error {
 			g.drop(2)
 			g.st.push(valueTmp, tmp)
 
+		case bytecode.Dup:
+			v := g.st.top()
+			g.st.push(v.kind, v.value)
+
 		case bytecode.Arraylength:
 			tmp := g.nextTmp()
 			dst := ir.Arg{Kind: ir.ArgReg, Value: tmp + g.tmpOffset}
@@ -268,6 +272,11 @@ func (g *generator) generate(dst *ir.Method) error {
 
 		case bytecode.Lcmp:
 			g.convertCmp(ir.InstLcmp)
+		case bytecode.Ifle:
+			if g.st.top().kind != valueFlags {
+				g.convertCmpZero()
+			}
+			g.convertCondJump(code, pc, ir.InstJumpLtEq)
 		case bytecode.Iflt:
 			if g.st.top().kind != valueFlags {
 				g.convertCmpZero()
@@ -289,6 +298,9 @@ func (g *generator) generate(dst *ir.Method) error {
 			}
 			g.convertCondJump(code, pc, ir.InstJumpNotEqual)
 
+		case bytecode.Ificmpne:
+			g.convertCmp(ir.InstIcmp)
+			g.convertCondJump(code, pc, ir.InstJumpNotEqual)
 		case bytecode.Ificmpge:
 			g.convertCmp(ir.InstIcmp)
 			g.convertCondJump(code, pc, ir.InstJumpGtEq)

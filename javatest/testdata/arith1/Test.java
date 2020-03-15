@@ -27,6 +27,9 @@ public class Test {
         T.printInt(a/b);
         T.printInt(b/a);
         T.printInt(y/a/b);
+        T.printInt(a/2);
+        T.printInt(a/3);
+        T.printInt(a/5);
 
         T.printInt(a*b);
         T.printInt(b*a*y);

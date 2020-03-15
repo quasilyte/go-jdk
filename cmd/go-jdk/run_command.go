@@ -30,6 +30,8 @@ func runMain() error {
 		`verbose output mode`)
 	flag.StringVar(&cmd.classPath, "cp", "",
 		`class path to use`)
+	flag.IntVar(&cmd.heapMem, "heapmem", 0,
+		`allocation bytes limit`)
 	flag.Parse()
 	cmd.methodArgs = flag.Args()
 
@@ -44,6 +46,7 @@ func runMain() error {
 }
 
 type runCommand struct {
+	heapMem         int
 	classFile       string
 	methodName      string
 	methodSignature string
@@ -71,7 +74,9 @@ func (cmd *runCommand) run() error {
 		return fmt.Errorf("method %s.%s not found", class.Name, cmd.methodName)
 	}
 
-	env := jruntime.NewEnv(vm, &jruntime.EnvConfig{})
+	env := jruntime.NewEnv(vm, &jruntime.EnvConfig{
+		AllocBytesLimit: int64(cmd.heapMem),
+	})
 	for i, arg := range cmd.methodArgs {
 		v, err := strconv.ParseInt(arg, 10, 64)
 		if err != nil {
@@ -115,6 +120,7 @@ func (cmd *runCommand) loadAndCompileClass(vm *jruntime.VM, filename string) (*v
 		Mmap:  &vm.Mmap,
 		State: &vm.State,
 	}
+	jruntime.BindFuncs(&ctx)
 	if err := vm.Compiler.Compile(ctx, toCompile); err != nil {
 		return nil, fmt.Errorf("compile: %v", err)
 	}

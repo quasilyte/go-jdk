@@ -54,6 +54,7 @@ const (
 	InstJumpGtEq
 	InstJumpGt
 	InstJumpLt
+	InstJumpLtEq
 	InstImul
 	InstIdiv
 	InstIadd

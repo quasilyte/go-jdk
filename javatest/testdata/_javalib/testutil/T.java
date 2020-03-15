@@ -1,5 +1,7 @@
 package testutil;
 
+import java.util.Arrays;
+
 public class T {
     public static void printInt(int x) {
         System.out.println(x);
@@ -7,6 +9,10 @@ public class T {
 
     public static void printLong(long x) {
         System.out.println(x);
+    }
+
+    public static void printIntArray(int[] xs) {
+        System.out.println(Arrays.toString(xs));
     }
 
     public static int isub(int x, int y) {

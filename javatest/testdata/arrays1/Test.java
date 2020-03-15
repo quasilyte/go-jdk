@@ -68,23 +68,27 @@ public class Test {
         T.printInt(zs[1]);
         T.printInt(zs[2]);
         T.printInt(zs[9]);
+
+        indexVarAndSize(17);
     }
 
     private static int[] makeArray() {
         return new int[10];
     }
 
-    // TODO: uncomment when variable indexes are supported.
-    // private static void indexVarAndSize(int length) {
-    //     int[] a = new int[length];
-    //     T.printInt(a.length);
-    //     int i1 = 0;
-    //     T.printInt(a[i1]);
-    //     a[i1] = 10;
-    //     T.printInt(a[i1]);
-    //     int i2 = 5;
-    //     T.printInt(a[i2]);
-    //     a[i2] = 20;
-    //     T.printInt(a[i2]);
-    // }
+    private static void indexVarAndSize(int length) {
+        int[] a = new int[length];
+        T.printInt(a.length);
+        int i1 = 0;
+        T.printInt(a[i1]);
+        a[i1] = 10;
+        T.printInt(a[i1]);
+
+        T.GC();
+
+        int i2 = 5;
+        T.printInt(a[i2]);
+        a[i2] = 20;
+        T.printInt(a[i2]);
+    }
 }

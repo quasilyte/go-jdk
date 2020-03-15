@@ -26,6 +26,14 @@ public class Test {
         T.printInt(sqrt(96));
         T.printInt(sqrt(100));
         T.printInt(sqrt(256));
+
+        T.printInt(gcd(1, 1));
+        T.printInt(gcd(1, 6));
+        T.printInt(gcd(30, 50));
+        T.printInt(gcd(36, 60));
+        T.printInt(gcd(60, 36));
+        T.printInt(gcd(2740, 1760));
+        T.printInt(gcd(1760, 2740));
     }
 
     public static int fib(int n) {
@@ -50,5 +58,16 @@ public class Test {
             n = n - b;
         }
         return b - 1;
+    }
+
+    public static int gcd(int a, int b) {
+        int q, r;
+        while (b > 0) {
+            q = a / b;
+            r = a - q * b;
+            a = b;
+            b = r;
+        }
+        return a;
     }
 }

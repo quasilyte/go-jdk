@@ -136,45 +136,51 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		asm.Jge(a1.Value)
 	case ir.InstJumpGt:
 		asm.Jgt(a1.Value)
+	case ir.InstJumpLtEq:
+		asm.Jle(a1.Value)
 	case ir.InstJumpLt:
 		asm.Jlt(a1.Value)
+	case ir.InstJumpNotEqual:
+		asm.Jne(a1.Value)
 	case ir.InstJump:
 		asm.Jmp(a1.Value)
 
 	case ir.InstArrayLen:
-		asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(a1))
+		asm.MovqMemReg(x64.RSI, x64.RAX, ptrDisp(a1))
 		asm.MovlMemReg(x64.RAX, x64.RAX, 16)
-		asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
+		asm.MovlRegMem(x64.RAX, x64.RSI, scalarDisp(dst))
 	case ir.InstIntArrayGet:
 		aref := a1
 		index := a2
-		asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(aref))
+		asm.MovqMemReg(x64.RSI, x64.RAX, ptrDisp(aref))
 		asm.MovqMemReg(x64.RAX, x64.RAX, 8)
 		switch index.Kind {
 		case ir.ArgIntConst:
 			asm.MovlMemReg(x64.RAX, x64.RAX, int32(index.Value)*4)
 		case ir.ArgReg:
-			// TODO:
-			// mov rcx, [rsi+regDisp(index)]
-			// mov rax, [rax+rcx*4]
-			return false
+			asm.MovlMemReg(x64.RSI, x64.RCX, scalarDisp(index))
+			asm.MovlMemindexReg(x64.RAX, x64.RAX, x64.RCX)
 		}
-		asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
+		asm.MovlRegMem(x64.RAX, x64.RSI, scalarDisp(dst))
 	case ir.InstIntArraySet:
 		aref := a1
 		index := a2
 		v := inst.Args[2]
-		asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(aref))
-		if index.Kind != ir.ArgIntConst {
-			return false
-		}
+		asm.MovqMemReg(x64.RSI, x64.RAX, ptrDisp(aref))
 		asm.MovqMemReg(x64.RAX, x64.RAX, 8)
-		switch v.Kind {
-		case ir.ArgIntConst:
+		switch {
+		case v.Kind == ir.ArgIntConst && index.Kind == ir.ArgIntConst:
 			asm.MovlConstMem(v.Value, x64.RAX, int32(index.Value)*4)
-		case ir.ArgReg:
-			asm.MovlMemReg(x64.RSI, x64.RCX, regDisp(v))
+		case v.Kind == ir.ArgReg && index.Kind == ir.ArgIntConst:
+			asm.MovlMemReg(x64.RSI, x64.RCX, scalarDisp(v))
 			asm.MovlRegMem(x64.RCX, x64.RAX, int32(index.Value)*4)
+		case v.Kind == ir.ArgIntConst && index.Kind == ir.ArgReg:
+			asm.MovlMemReg(x64.RSI, x64.RCX, scalarDisp(index))
+			asm.MovlConstMemindex(v.Value, x64.RAX, x64.RCX)
+		case v.Kind == ir.ArgReg && index.Kind == ir.ArgReg:
+			asm.MovlMemReg(x64.RSI, x64.R8, scalarDisp(v))
+			asm.MovlMemReg(x64.RSI, x64.RCX, scalarDisp(index))
+			asm.MovlRegMemindex(x64.R8, x64.RAX, x64.RCX)
 		default:
 			return false
 		}
@@ -184,23 +190,26 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		if !ok {
 			return false
 		}
-		// Result is in RAX register.
-		// We need to put it into the objects slice slot
-		// to avoid premature garbage collection of it.
-		const objectsOffset = 16
-		asm.MovqMemReg(x64.RDI, x64.RCX, objectsOffset)
-		asm.MovqRegMem(x64.RAX, x64.RCX, regDisp(inst.Dst))
+		asm.MovqRegMem(x64.RAX, x64.RSI, ptrDisp(inst.Dst))
 
-	case ir.InstLload, ir.InstAload:
+	case ir.InstAload:
 		switch a1.Kind {
 		case ir.ArgReg:
-			asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(a1))
-			asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(dst))
+			asm.MovqMemReg(x64.RSI, x64.RAX, ptrDisp(a1))
+			asm.MovqRegMem(x64.RAX, x64.RSI, ptrDisp(dst))
+		default:
+			return false
+		}
+	case ir.InstLload:
+		switch a1.Kind {
+		case ir.ArgReg:
+			asm.MovqMemReg(x64.RSI, x64.RAX, scalarDisp(a1))
+			asm.MovqRegMem(x64.RAX, x64.RSI, scalarDisp(dst))
 		case ir.ArgIntConst:
 			if !fits32bit(a1.Value) {
 				return false
 			}
-			asm.MovqConst32Mem(int32(a1.Value), x64.RSI, regDisp(dst))
+			asm.MovqConst32Mem(int32(a1.Value), x64.RSI, scalarDisp(dst))
 		default:
 			return false
 		}
@@ -260,20 +269,26 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		default:
 			return false
 		}
-		asm.JmpMem(x64.RSI, -8)
-	case ir.InstLret, ir.InstAret:
+		asm.JmpMem(x64.RSI, -16)
+	case ir.InstAret:
+		if a1.Kind != ir.ArgReg {
+			return false
+		}
+		asm.MovqMemReg(x64.RSI, x64.RAX, ptrDisp(a1))
+		asm.JmpMem(x64.RSI, -16)
+	case ir.InstLret:
 		switch a1.Kind {
 		case ir.ArgReg:
-			asm.MovqMemReg(x64.RSI, x64.RAX, regDisp(a1))
+			asm.MovqMemReg(x64.RSI, x64.RAX, scalarDisp(a1))
 		case ir.ArgIntConst:
 			if !fits32bit(a1.Value) {
 				return false
 			}
 			asm.MovqConstReg(a1.Value, x64.RAX)
 		}
-		asm.JmpMem(x64.RSI, -8)
+		asm.JmpMem(x64.RSI, -16)
 	case ir.InstRet:
-		asm.JmpMem(x64.RSI, -8)
+		asm.JmpMem(x64.RSI, -16)
 
 	case ir.InstCallGo:
 		sym := inst.Args[0].SymbolID()
@@ -341,10 +356,16 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 		}
 	case ir.InstIdiv:
 		switch {
-		case a2.Kind == ir.ArgReg && a1.Kind == ir.ArgReg:
+		case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgReg:
 			asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
 			asm.Cdq()
 			asm.IdivlMem(x64.RSI, regDisp(a2))
+			asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
+		case a1.Kind == ir.ArgReg && a2.Kind == ir.ArgIntConst:
+			asm.MovlMemReg(x64.RSI, x64.RAX, regDisp(a1))
+			asm.Cdq()
+			asm.MovlConstReg(a2.Value, x64.RCX)
+			asm.IdivlReg(x64.RCX)
 			asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(dst))
 		default:
 			return false
@@ -366,7 +387,9 @@ func (cl *Compiler) assembleInst(inst ir.Inst) bool {
 func (cl *Compiler) assembleCallStatic(inst ir.Inst) bool {
 	asm := cl.asm
 
-	frameSize := cl.method.Out.FrameSlots*8 + 8
+	// Frame size is 16 bytes per every stack slot plus
+	// one extra slot to store the return address.
+	frameSize := cl.method.Out.FrameSlots*16 + 16
 	sym := inst.Args[0].SymbolID()
 	pkg := cl.ctx.State.Packages[sym.PackageIndex()]
 	class := pkg.Classes[sym.ClassIndex()]
@@ -376,9 +399,16 @@ func (cl *Compiler) assembleCallStatic(inst ir.Inst) bool {
 	signature := jclass.MethodDescriptor(method.Descriptor)
 	signature.WalkParams(func(typ jclass.DescriptorType) {
 		arg := inst.Args[i]
-		disp := int32(frameSize + (i-1)*8)
-		switch typ.Kind {
-		case 'I':
+		disp := int32(frameSize + (i-1)*16)
+		switch {
+		case typ.Dims != 0:
+			if arg.Kind != ir.ArgReg {
+				failed = true
+				return
+			}
+			asm.MovqMemReg(x64.RSI, x64.RAX, ptrDisp(arg))
+			asm.MovqRegMem(x64.RAX, x64.RSI, disp+8)
+		case typ.Kind == 'I':
 			switch arg.Kind {
 			case ir.ArgIntConst:
 				asm.MovlConstMem(arg.Value, x64.RSI, disp)
@@ -388,8 +418,7 @@ func (cl *Compiler) assembleCallStatic(inst ir.Inst) bool {
 			default:
 				failed = true
 			}
-			i++
-		case 'J':
+		case typ.Kind == 'J':
 			switch arg.Kind {
 			case ir.ArgIntConst:
 				if !fits32bit(arg.Value) {
@@ -402,10 +431,10 @@ func (cl *Compiler) assembleCallStatic(inst ir.Inst) bool {
 			default:
 				failed = true
 			}
-			i++
 		default:
 			failed = true
 		}
+		i++
 	})
 	if failed {
 		return false
@@ -416,15 +445,24 @@ func (cl *Compiler) assembleCallStatic(inst ir.Inst) bool {
 		// The magic disp=16 is a width of instructions that
 		// follow lea inside this block.
 		asm.Raw(0x48, 0x8d, 0x05, 0x10, 0, 0, 0) // lea rax, [rip+16]
-		asm.MovqRegMem(x64.RAX, x64.RSI, -8)
+		asm.MovqRegMem(x64.RAX, x64.RSI, -16)
 		index := asm.MovqFixup64Reg(x64.RAX)
 		asm.JmpReg(x64.RAX)
 		cl.pushReloc(inst.Args[0].SymbolID(), index)
 	}
 	asm.AddqConstReg(int64(-frameSize), x64.RSI)
 	if inst.Dst.Kind != 0 {
-		// If function returns int, should use Movl.
-		asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(inst.Dst))
+		typ := signature.ReturnType()
+		switch {
+		case typ.Dims != 0:
+			asm.MovqRegMem(x64.RAX, x64.RSI, ptrDisp(inst.Dst))
+		case typ.Kind == 'I':
+			asm.MovlRegMem(x64.RAX, x64.RSI, regDisp(inst.Dst))
+		case typ.Kind == 'J':
+			asm.MovqRegMem(x64.RAX, x64.RSI, regDisp(inst.Dst))
+		default:
+			return false
+		}
 	}
 
 	return true
@@ -450,8 +488,19 @@ func (cl *Compiler) assembleCallGo(fnAddr uintptr, desc string, dst ir.Arg, args
 
 	signature.WalkParams(func(typ jclass.DescriptorType) {
 		arg := args[i]
-		switch typ.Kind {
-		case '$':
+		switch {
+		case typ.Dims != 0:
+			if rem := offset % 8; rem != 0 {
+				offset += rem
+			}
+			if arg.Kind != ir.ArgReg {
+				failed = true
+				return
+			}
+			asm.MovqMemReg(x64.RSI, x64.RAX, ptrDisp(arg))
+			asm.MovqRegMem(x64.RAX, x64.RBP, int32(arg0offset+offset))
+			offset += 8
+		case typ.Kind == '$':
 			// Dollar ($) is our special marker for env argument.
 			if rem := offset % 8; rem != 0 {
 				offset += rem
@@ -459,7 +508,7 @@ func (cl *Compiler) assembleCallGo(fnAddr uintptr, desc string, dst ir.Arg, args
 			asm.MovqMemReg(x64.RBP, x64.RAX, envOffset)
 			asm.MovqRegMem(x64.RAX, x64.RBP, int32(arg0offset+offset))
 			offset += 8
-		case 'I':
+		case typ.Kind == 'I':
 			if rem := offset % 4; rem != 0 {
 				offset += rem
 			}
@@ -473,7 +522,7 @@ func (cl *Compiler) assembleCallGo(fnAddr uintptr, desc string, dst ir.Arg, args
 				failed = true
 			}
 			offset += 4
-		case 'J':
+		case typ.Kind == 'J':
 			if rem := offset % 8; rem != 0 {
 				offset += rem
 			}
@@ -501,7 +550,7 @@ func (cl *Compiler) assembleCallGo(fnAddr uintptr, desc string, dst ir.Arg, args
 
 	asm.MovqRegMem(x64.RSI, x64.RDI, tmp0offset) // Spill SI
 	asm.MovlConstReg(int64(fnAddr), x64.RCX)
-	asm.MovlConstReg(int64(cl.ctx.Funcs.Jcall+gocallOffset), x64.RDI)
+	asm.MovlConstReg(int64(cl.ctx.Funcs.JcallScalar+gocallOffset), x64.RDI)
 	asm.Raw(0x48, 0x8d, 0x05, 4+2, 0, 0, 0)
 	asm.MovqRegMem(x64.RAX, x64.RBP, -8)
 	asm.JmpReg(x64.RDI)

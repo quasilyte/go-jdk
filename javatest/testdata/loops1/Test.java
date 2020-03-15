@@ -26,5 +26,14 @@ public class Test {
             i--;
         } while (i >= 100);
         T.printInt(i);
+
+        whileGreater(0);
+        whileGreater(5);
+    }
+
+    public static void whileGreater(int i) {
+        while (i > 0) {
+            i--;
+        }
     }
 }

@@ -3,7 +3,6 @@ package jruntime
 import (
 	"sync"
 	"testing"
-	"unsafe"
 
 	"github.com/quasilyte/go-jdk/mmap"
 )
@@ -12,16 +11,16 @@ import (
 
 func TestJcall(t *testing.T) {
 	var env Env
-	stack := make([]int64, 16)
-	env.stack = (*byte)(unsafe.Pointer(&stack[0]))
+	env.slots = make([]stackSlot, 16)
+	env.stack = &env.slots[0]
 
 	funcCode := []byte{
 		// MOVQ $777, (SI)
 		0x48, 0xc7, 0x06, 0x09, 0x03, 0x00, 0x00,
 		// MOVL $1, AX
 		0xb8, 0x01, 0x00, 0x00, 0x00,
-		// JMP -8(SI)
-		0xff, 0x66, 0xf8,
+		// JMP -16(SI)
+		0xff, 0x66, 0xf0,
 	}
 	d, executable, err := mmap.Executable(len(funcCode))
 	if err != nil {
@@ -31,18 +30,18 @@ func TestJcall(t *testing.T) {
 	defer munmap(t, d)
 
 	checkStack := func() {
-		if stack[0] != 1 {
-			t.Errorf("stack[0] mismatch:\nhave: %d\nwant: 1", stack[0])
+		if env.slots[0].scalar != 1 {
+			t.Errorf("stack[0] mismatch:\nhave: %d\nwant: 1", env.slots[0].scalar)
 		}
-		if stack[1] != 777 {
-			t.Errorf("stack[1] mismatch:\nhave: %d\nwant: 777", stack[1])
+		if env.slots[1].scalar != 777 {
+			t.Errorf("stack[1] mismatch:\nhave: %d\nwant: 777", env.slots[1].scalar)
 		}
-		stack[0] = 0
-		stack[1] = 0
+		env.slots[0].scalar = 0
+		env.slots[1].scalar = 0
 	}
 
 	// Call in a same goroutine, on a same frame.
-	jcall(&env, &executable[0])
+	jcallScalar(&env, &executable[0])
 	checkStack()
 
 	// Should not panic nor corrupt the stack.
@@ -55,7 +54,7 @@ func TestJcall(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		jcall(&env, &executable[0])
+		jcallScalar(&env, &executable[0])
 		checkStack()
 		wg.Done()
 	}()
@@ -64,17 +63,17 @@ func TestJcall(t *testing.T) {
 
 //go:noinline
 func nestedCall(env *Env, code []byte) {
-	jcall(env, &code[0])
+	jcallScalar(env, &code[0])
 }
 
 func BenchmarkJcall(b *testing.B) {
 	var env Env
-	stack := make([]int64, 16)
-	env.stack = (*byte)(unsafe.Pointer(&stack[0]))
+	env.slots = make([]stackSlot, 16)
+	env.stack = &env.slots[0]
 
 	funcCode := []byte{
-		// JMP -8(SI)
-		0xff, 0x66, 0xf8,
+		// JMP -16(SI)
+		0xff, 0x66, 0xf0,
 	}
 	d, executable, err := mmap.Executable(len(funcCode))
 	if err != nil {
@@ -86,7 +85,7 @@ func BenchmarkJcall(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		jcall(&env, executablePtr)
+		jcallScalar(&env, executablePtr)
 	}
 	b.StopTimer()
 }
