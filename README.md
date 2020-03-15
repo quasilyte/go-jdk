@@ -9,7 +9,7 @@ written in Go with a goal to deliver a great embeddable [JVM](https://en.wikiped
 Key features:
 
 * JVM bytecode converted to [register-based form](https://www.usenix.org/legacy/events%2Fvee05%2Ffull_papers/p153-yunhe.pdf)
-* Eagerly JIT-complies all loaded code, no run-time tracing involved
+* Loaded code is JIT-compiled right away, no run-time tracing involved
 * Cheap `Go->JVM` calls
 * Cheap `JVM->Go` calls
 * `native` Java methods can be written in Go
