@@ -15,6 +15,7 @@ public class Test {
 
         arrayLoop1(lit1);
         arrayLoop2(lit1);
+        arrayLoop3(lit1);
     }
 
     public static void arrayLoop1(int[] xs) {
@@ -29,6 +30,12 @@ public class Test {
     public static void arrayLoop2(int[] xs) {
         for (int i = 0; i < xs.length; i++) {
             T.printInt(xs[i]);
+        }
+    }
+
+    public static void arrayLoop3(int[] xs) {
+        for (int x : xs) {
+            T.printInt(x);
         }
     }
 }
